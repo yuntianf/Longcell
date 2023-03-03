@@ -1,0 +1,487 @@
+#' @include spliceOb.R
+#' @include exon_table.R
+
+
+#' @title compute psi for exons in a gene
+#' @description compute psi for exons in a gene from a Splice object
+#' @param spliceOb the Splice object
+#' @param gene name of the target gene
+#' @param gene_bed gene bed annotation
+#' @param gtf gtf annotation
+#' @param cells cells to use in building exon count table
+#' @param exons exon to use in building exon count table
+#' @param exon_len_thresh the minimum length of an exon to be preserved in exon count table
+#' @param exprs_thresh the minimum gene expression to calculate the exon psi (for unbiased estimation)
+#' @param sep The seperation character between exons in the isoform string
+#' @return a list of exon count table and gene count table for each cell
+#' @export
+gene_exons_psi.base <- function(spliceOb,gene,
+                                cells = "all",exons = "all",
+                                gene_bed = NULL,gtf = NULL,
+                                exon_len_thresh = 10,
+                                exprs_thresh = 10,sep = "|"){
+  count_list = gene_exons_table.base(spliceOb,gene,gene_bed= gene_bed,gtf = gtf,
+                                     cells = cells,exons = exons,
+                                     exon_len_thresh = exon_len_thresh,sep = sep)
+  if(is.null(count_list)){
+    return(NULL)
+  }
+  gene_count_table = count_list[[1]]
+  exon_count_table = count_list[[2]]
+
+  exons = setdiff(colnames(exon_count_table),"cell_id")
+
+  exon_psi_table = exon_count_table[,exons]/gene_count_table[,exons]
+  exon_psi_table[gene_count_table[,exons] < exprs_thresh] = NA
+  exon_psi_table = cbind(exon_count_table[,"cell_id"],exon_psi_table)
+  colnames(exon_psi_table)[1] = "cell_id"
+
+  row_filter = apply(exon_psi_table,1,function(x){
+    return(sum(is.na(x)) < length(x) - 1)
+  })
+  col_filter = apply(exon_psi_table,2,function(x){
+    return(sum(is.na(x)) < length(x))
+  })
+  exon_psi_table = exon_psi_table[row_filter,col_filter]
+
+  return(exon_psi_table)
+}
+
+setGeneric("gene_exons_psi",
+           function(object,gene,cells,exons,...)
+             standardGeneric("gene_exons_psi"))
+
+#' @title generic gene_exons_psi function for Splice object
+#' @inheritParams gene_exons_psi.base
+#' @export
+setMethod("gene_exons_psi",
+          signature(object = "Splice",gene="character",
+                    cells = "character",exons = "character"),
+          function(object,gene,
+                   cells = "all",exons = "all",...){
+            gene_exons_psi.base(spliceOb = object,gene = gene,
+                                cells = cells,exons = exons,...)
+          }
+)
+
+#' @title generic gene_exons_psi function for Seurat object
+#' @param slot the slot name for the Splice object embedded in the Seurat object
+#' @inheritParams gene_exons_psi.base
+#' @import Seurat
+#' @export
+setMethod("gene_exons_psi",
+          signature(object = "Seurat",gene="character",
+                    cells = "character",exons = "character"),
+          function(object,gene,
+                   cells = "all",exons = "all",slot = "splice",...){
+            spliceOb = getSplice(object,slot = slot)
+            gene_exons_psi.base(spliceOb = spliceOb,gene = gene,
+                                cells = cells,exons = exons,...)
+          }
+)
+
+#' @title count exon phi
+#' @description calculate the alternative splicing heterogeneity for an exon
+#' @param x a vector of exon psi across cells
+#' @importFrom stats var
+#' @return a numeric value for exon phi
+phi <- function(x){
+  return(var(x)/(mean(x)*(1-mean(x))))
+}
+
+#' @title count the confidence interval for exon phi
+#' @description using bootstrap to calculate the confidence interval for exon phi
+#' @param x a vector of exon psi across cells
+#' @param iters the number of sampling iteration in bootstrap
+#' @importFrom stats na.omit quantile
+#' @return a numeric value for exon phi
+phi_conf <- function(x,iters = 100){
+  conf <- sapply(1:iters,function(i){
+    sample_x <- sample(x,length(x),replace = TRUE)
+    sample_phi <- phi(sample_x)
+    return(sample_phi)
+  })
+  out <- na.omit(conf)
+  return(c(mean(out),quantile(out,c(0.025,0.975),na.rm = TRUE)))
+}
+
+#' @title compute phi for exons in a gene
+#' @description compute phi for exons in a gene from a Splice object
+#' @param spliceOb the Splice object
+#' @param gene name of the target gene
+#' @param gene_bed gene bed annotation
+#' @param gtf gtf annotation
+#' @param cells cells to use in building exon count table
+#' @param exons exon to use in building exon count table
+#' @param cell_count_thresh the minimum number of cells expressing this gene
+#' @param exon_len_thresh the minimum length of an exon to be preserved in exon count table
+#' @param exprs_thresh the minimum gene expression to calculate the exon psi (for unbiased estimation)
+#' @param iters iteration for bootstrap to generate the confidence interval of phi
+#' @param sep The seperation character between exons in the isoform string
+#' @importFrom stats na.omit
+#' @return a list of exon count table and gene count table for each cell
+gene_exons_phi <- function(spliceOb,gene,gene_bed = NULL,gtf = NULL,cells = "all",
+                           exons = "all",exon_len_thresh = 10,
+                           cell_count_thresh = 30,exprs_thresh = 10,
+                           iters = 100,sep = "|"){
+  exon_psi_table = gene_exons_psi.base(spliceOb,gene,gene_bed,gtf,cells = cells,
+                                  exons = exons,exon_len_thresh = exon_len_thresh,
+                                  exprs_thresh = exprs_thresh,sep = sep)
+  if(is.null(exon_psi_table) || length(exon_psi_table) == 0){
+    return(NULL)
+  }
+  exons = colnames(exon_psi_table)[which(colSums(!is.na(exon_psi_table)) >= cell_count_thresh)]
+  exons = setdiff(exons,"cell_id")
+
+  if(length(exons) == 0){
+    return(NULL)
+  }
+  else{
+    exons_phi <- lapply(exons,function(i){
+      psi = na.omit(unlist(exon_psi_table[,i]))
+      conf = phi_conf(psi,iters = iters)
+      return(c(i,mean(psi),conf,length(psi)))
+    })
+    exons_phi <- as.data.frame(do.call(rbind,exons_phi))
+    exons_phi[,2:ncol(exons_phi)] <- apply(exons_phi[,2:ncol(exons_phi)],
+                                           2,as.numeric)
+    colnames(exons_phi) <- c("exon","mean_psi","phi","phi_lwr","phi_upr","count")
+    exons_phi <- as.data.frame(exons_phi)
+    return(as.data.frame(exons_phi))
+  }
+}
+
+#' @title compute phi for exons in multi-genes
+#' @description compute phi for exons in a gene from a Splice object
+#' @param spliceOb the Splice object
+#' @param genes vector of names of the target gene
+#' @param gene_bed gene bed annotation
+#' @param gtf gtf annotation
+#' @param cells cells to use in building exon count table
+#' @param exons exon to use in building exon count table
+#' @param cell_count_thresh the minimum number of cells expressing this gene
+#' @param exon_len_thresh the minimum length of an exon to be preserved in exon count table
+#' @param exprs_thresh the minimum gene expression to calculate the exon psi (for unbiased estimation)
+#' @param sep The seperation character between exons in the isoform string
+#' @importFrom stats na.omit
+#' @return a list of exon count table and gene count table for each cell
+#' @export
+genes_exons_phi.base <- function(spliceOb,genes,
+                                 cells = "all",exons = "all",
+                                 gene_bed = NULL,gtf = NULL,
+                                 exon_len_thresh = 10,cell_count_thresh = 30,
+                                 exprs_thresh = 10,iters = 100,
+                                 psi_lwr = 0.1, psi_upr = 0.9,
+                                 phi_conf_thresh = 0.2,sep = "|"){
+  phi <- lapply(genes,function(x){
+    error <- try({
+      temp = gene_exons_phi(spliceOb,x,gene_bed = gene_bed,gtf = gtf,
+                            cells = cells,exons = exons,
+                            exon_len_thresh = exon_len_thresh,
+                            cell_count_thresh = cell_count_thresh,
+                            exprs_thresh = exprs_thresh,
+                            iters = iters,sep = sep)
+      if(!is.null(temp)){
+        temp = cbind(x,temp)
+      }
+      return(temp)
+    })
+    if(class(error) == "try-error"){
+      print(x)
+      return(NULL)
+    }
+  })
+  phi <- do.call(rbind,phi)
+  phi = na.omit(phi)
+
+  if(length(phi) > 0){
+    colnames(phi)[1] <- "gene"
+    phi$phi_conf <- phi$phi_upr-phi$phi_lwr
+    phi <- phi[phi$mean_psi > psi_lwr & phi$mean_psi < psi_upr &
+                 phi$phi_conf < phi_conf_thresh,]
+  }
+  return(phi)
+}
+
+setGeneric("genes_exons_phi",
+           function(object,genes,...)
+             standardGeneric("genes_exons_phi"))
+
+#' @title generic genes_exons_phi function for Splice object
+#' @param object the Splice object
+#' @inheritParams genes_exons_phi.base
+#' @param ... parameters for genes_exons_phi.base
+#' @export
+setMethod("genes_exons_phi",
+          signature(object = "Splice",genes = "character"),
+          function(object,genes,...){
+            genes_exons_phi.base(object,genes = genes,...)
+          }
+)
+
+#' @title generic genes_exons_phi function for Seurat object
+#' @param object The Seurat object with a Splice object in misc
+#' @param slot the slot name for the Splice object embedded in the Seurat object
+#' @inheritParams genes_exons_phi.base
+#' @param ... parameters for genes_exons_phi.base
+#' @import Seurat
+#' @export
+setMethod("genes_exons_phi",
+          signature(object = "Seurat",genes = "character"),
+          function(object,genes,slot = "splice",...){
+            spliceOb = getSplice(object,slot = slot)
+            genes_exons_phi.base(spliceOb,genes = genes,...)
+          }
+)
+
+setGeneric("HighExprsGene",
+           function(object,slot,thresh,...) standardGeneric("HighExprsGene"))
+
+#' @title generic HighExprsGene function for Seurat object
+#' @description choose genes with high total expression for phi calculation
+#' @param slot the slot name RNA expression assay in the Seurat object
+#' @param thresh the minimum total gene expression
+#' @import Seurat
+#' @export
+setMethod("HighExprsGene",
+          signature(object = "Seurat",slot = "character",thresh = "numeric"),
+          function(object,slot = "RNA",thresh = 100){
+            exprs = rowSums(object[[slot]])
+            return(names(exprs)[exprs > thresh])
+          }
+)
+
+#' @title plot mean psi vs. phi scatter plot for each exon
+#' @description plot mean psi vs. phi scatter plot for each exon, colored by the confidence
+#' interval of phi
+#' @param data the dataframe of phi, which should include columns for mean psi, phi, phi confidence
+#' interval and the exon name
+#' @param psi_range Only exons with mean psi within this range will be annotated
+#' @param phi_conf_upr Only exons with phi confidence interval lower than this threshold
+#' will be annotated
+#' @param color_lwr,color_mid,color_upr The color gradient to mark the size of phi confidence interval
+#' @param midpoint the midpoint of the color gradient
+#' @param psi_col,phi_col,phi_conf_col,annot_col The coknames to indicate the mean psi,phi,phi confidence
+#' interval and exon annotation within the input data
+#' @param annot_size the text size for exon annotation
+#' @import ggplot2 latex2exp
+#' @export
+phiPlot = function(data,psi_range = c(0.3,0.7),phi_conf_upr = 0.2,
+                   color_lwr = "steelblue",color_mid = "whitesmoke",
+                   color_upr = "coral",midpoint = 0.1,
+                   psi_col = "mean_psi",phi_col = "phi",
+                   phi_conf_col = "phi_conf",annot_col = "symbol",
+                   annot_size = 4){
+  data_mid <- data[data[,psi_col] > psi_range[1] & data[,psi_col] < psi_range[2] &
+                     data[,phi_conf_col] < phi_conf_upr,]
+  out = ggplot()+
+    geom_point(data = data,
+               aes_string(x = psi_col,y = phi_col,color = phi_conf_col),size = 2)+
+    scale_color_gradient2(low = color_lwr,mid = color_mid,
+                          high = color_upr,midpoint = midpoint)+
+    geom_text(data = data_mid,
+              aes_string(x = psi_col,y = phi_col),
+              label=data_mid[,annot_col],
+              nudge_x = 0, nudge_y = 0, check_overlap = T,size =annot_size)+
+    xlab(TeX("$\\bar{\\psi}$"))+ylab(TeX("$\\phi$"))+
+    labs(color=TeX('$CI\\,of\\,\\phi$'))+
+    theme_classic()+
+    theme(text = element_text(size = 15))
+  return(out)
+}
+
+
+#' @title plot psi distribution
+#' @description plot psi distribution for a cell group into histogram
+#' @param spliceOb a Splice object
+#' @param gene the name of specified gene
+#' @param exon the selected exon to be plot
+#' @param cells the cells to be included in the psi plot
+#' @param gene_bed a dataframe of gene_bed annotation
+#' @param gtf a dataframe of gtf annotation
+#' @param alpha the parameter alpha for fitted beta distribution for psi
+#' @param beta the parameter beta for fitted beta distribution for psi
+#' @param exprs_thresh the minimum gene expression required for psi calculation
+#' @param exon_len_thresh the minimum length of exons for GLRT
+#' @param sep the character to split exons in the isoform string
+#' @param binwidth the bin size for the histogram ranging from (0,1]
+#' @param low,high,mid Colors for the bins to represent the mean gene count in each bin
+#' @param midpoint the gene count thresh to set the middle color
+#' @param ... aesthetic parameters for ggplot
+#' @return a ggplot object of psi distribution histogram
+#' @import ggplot2 dplyr latex2exp
+#' @importFrom stats dbeta median na.omit
+psiHist.base <- function(spliceOb, gene, exon, cells = "all",
+                          gene_bed = NULL,gtf = NULL,
+                          alpha = NULL,beta = NULL,
+                          exprs_thresh = 5,
+                          exon_len_thresh = 10,sep = "|",
+                          binwidth = 0.05,low = "steelblue",
+                          high = "coral",mid = "whitesmoke",
+                          midpoint = NULL,...){
+  count_list = gene_exons_table.base(spliceOb = spliceOb,gene=gene,
+                                     exons = exon,cells = cells,
+                                     gene_bed = gene_bed,gtf = gtf,
+                                     exon_len_thresh = exon_len_thresh,...)
+  gene_count_table = count_list[[1]]
+  exon_count_table = count_list[[2]]
+
+  exon_id = exon_search(exon = exon,exons_group = colnames(exon_count_table),sep = sep)
+  if(sum(exon_id) == 0){
+    stop("The exon doesn't exist in this gene")
+  }
+  else{
+    exon = colnames(exon_count_table)[exon_id][1]
+  }
+
+  group_exon = exon_count_table[,exon]
+  group_gene = gene_count_table[,exon]
+
+  psi = unlist(group_exon/group_gene)
+
+  plot_data = na.omit(as.data.frame(cbind(group_gene,group_exon,psi)))
+  colnames(plot_data) = c("gene","exon","psi")
+  plot_data = plot_data[plot_data$gene >= exprs_thresh,]
+  plot_data$psi_bin = cut(plot_data$psi,seq(0,1,binwidth),include.lowest = TRUE)
+
+  plot_data = plot_data %>%
+    group_by(psi_bin) %>%
+    summarise(gene = mean(gene),count = n())
+  plot_data$freq = plot_data$count/sum(plot_data$count)
+  plot_data$freq = plot_data$freq/binwidth
+
+  plot_data$psi_bin = as.numeric(plot_data$psi_bin)
+  plot_data$psi_bin = plot_data$psi_bin/max(plot_data$psi_bin)
+  plot_data$psi_bin = plot_data$psi_bin-min(plot_data$psi_bin)/2
+
+  if(is.null(midpoint)){
+    midpoint = median(plot_data$gene)
+  }
+  out = ggplot()+
+    geom_segment(data = na.omit(plot_data),
+                 aes(x = psi_bin,xend = psi_bin,y = 0,
+                     yend = freq,color = gene),size = 8)+
+    scale_color_gradient2(low = low,high = high,
+                          mid = mid,midpoint = midpoint,name = "gene count")+
+    xlab(TeX("$\\psi$"))+ylab("Density")+
+    theme_classic()+
+    theme(text = element_text(size = 15))
+
+  if(!is.null(alpha) & !is.null(beta)){
+    group_density = dbeta(seq(0,1,0.01),alpha,beta)
+    out = out+geom_line(aes(x = seq(0,1,0.01),y = group_density))
+  }
+
+  return(out)
+}
+
+setGeneric("psiHist",
+           function(object,gene,exon,...) standardGeneric("psiHist"))
+
+#' @title generic psiHist function for Splice object
+#' @description  plot psi distribution for a cell group into histogram for a Splice object
+#' @param object The Splice object
+#' @inheritParams psiHist.base
+#' @return a ggplot object of psi distribution histogram
+#' @export
+setMethod("psiHist",
+          signature(object = "Splice",gene = "character",exon = "character"),
+          function(object, gene, exon,...){
+            psiHist.base(spliceOb = object,gene = gene,
+                         exon = exon,...)
+          }
+)
+
+#' @title generic psiHist function for Seurat object
+#' @description plot psi distribution for a cell group into histogram for a Seurat object
+#' @param object The Seurat object
+#' @param slot the slot name to store Splice object in Seurat object
+#' @param group_col if group_col and group is not NULL, parameters cells will be ignored
+#' and cells within the group will be selected for psi plot
+#' @param group cell group in meta.data of Seurat
+#' @inheritParams psiHist.base
+#' @return a ggplot object of psi distribution histogram
+#' @import Seurat
+#' @export
+setMethod("psiHist",
+          signature(object = "Seurat",gene = "character",exon = "character"),
+          function(object, gene, exon, cells = "all",
+                   slot = "splice",group_col = NULL,group = NULL,...){
+            spliceOb = getSplice(object,slot = slot)
+            if(!is.null(group_col) & !is.null(group)){
+              meta = object@meta.data
+              cells = rownames(meta[meta[,group_col] %in% group,])
+            }
+            psiHist.base(spliceOb = spliceOb,gene = gene,
+                         exon = exon,cells = cells,...)
+          }
+)
+
+#' @title plot psi value in cell embeddings
+#' @description plot psi value in cell embeddings
+#' @param spliceOb a Splice object
+#' @param gene the name of specified gene
+#' @param exons the selected exon to be plot
+#' @param cell_embedding A dataframe of cell embedding coordinates
+#' @param dim Two dimensions to use to plot cell embedding
+#' @param ... parameters for gene_exons_psi.base to calculate psi value
+#' @return a ggplot object of psi in cell embedding
+#' @import ggplot2 dplyr
+#' @importFrom stats median na.omit
+#' @export
+psiCellPlot.base = function(spliceOb,gene,exons,cell_embedding,dim = c(1,2),...){
+  cell_embedding = as.data.frame(cell_embedding)
+  dims = colnames(cell_embedding)[dim]
+  cell_embedding$cell_id = rownames(cell_embedding)
+
+  psi = gene_exons_psi.base(spliceOb = spliceOb,gene = gene,
+                            exons = exons,...)
+  colnames(psi)[2:ncol(psi)] = paste("exon",colnames(psi)[2:ncol(psi)],sep = "_")
+  cell_embedding = left_join(cell_embedding,psi,by = "cell_id")
+
+  out_plot = lapply(colnames(psi)[2:ncol(psi)],function(x){
+    out = ggplot()+
+      geom_point(data = cell_embedding,
+                 aes_string(x = dims[1],y = dims[2]),
+                 color = "grey",alpha = 1,size = 1)+
+      geom_point(data = na.omit(cell_embedding),
+                 aes_string(x = dims[1],y = dims[2],color = x),
+                 alpha = 1,size = 2)+
+      scale_color_gradient2(low = "steelblue",high = "coral",
+                            mid = "whitesmoke",midpoint = median(psi[,x]))+
+      theme_classic()+
+      xlab(dims[1])+ylab(dims[2])+
+      theme(text = element_text(size = 15))
+    return(out)
+  })
+  return(out_plot)
+}
+
+
+setGeneric("psiCellPlot",
+           function(object,gene,exons,cell_embedding,...)
+             standardGeneric("psiCellPlot"))
+
+
+#' @title generic psiCellPlot function for Seurat object
+#' @description plot psi value in cell embeddings for a Seurat object
+#' @param object the Seurat object with both cell embeddings and Splice object
+#' @param slot the slot name to store Splice object in Seurat object
+#' @param cell_embedding the name of embedding to use from the Seurat object
+#' @inheritParams psiCellPlot.base
+#' @return a ggplot object of psi in cell embedding
+#' @import Seurat
+#' @export
+setMethod("psiCellPlot",
+          signature(object = "Seurat",gene = "character",
+                    exons = "character",cell_embedding = "character"),
+          function(object, gene, exons,
+                   cell_embedding = "umap",
+                   slot = "splice",...){
+            spliceOb = getSplice(object,slot = slot)
+            cell_embedding = Embeddings(object,reduction = cell_embedding)
+            psiCellPlot.base(spliceOb = spliceOb,gene = gene,
+                             exons = exons, cell_embedding = cell_embedding,
+                             dim = dim,...)
+          }
+)
