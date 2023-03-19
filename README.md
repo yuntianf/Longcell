@@ -15,6 +15,10 @@ The easiest way to get Longcell is to install it from Github:
 devtools::install_github("yuntianf/Longcell")
 ```
 
+## Instruction
+To view the documetation and tutorial of Longcell, you could visit:
+https://yuntianf.github.io/Longcell/index.html
+
 ## Citation
 
 If you use Longcell for published work, please cite our manuscript:
