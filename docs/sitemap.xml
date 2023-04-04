@@ -1,240 +1,240 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/404.html</loc>
   </url>
   <url>
-    <loc>/articles/Longcell.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/articles/Longcell.html</loc>
   </url>
   <url>
-    <loc>/articles/getStart.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/articles/getStart.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/articles/index.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/authors.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/index.html</loc>
   </url>
   <url>
-    <loc>/news/index.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/news/index.html</loc>
   </url>
   <url>
-    <loc>/reference/GLRT.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/GLRT.html</loc>
   </url>
   <url>
-    <loc>/reference/GLRT_sig_plot.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/GLRT_sig_plot.html</loc>
   </url>
   <url>
-    <loc>/reference/HighExprsGene-Seurat-character-numeric-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/HighExprsGene-Seurat-character-numeric-method.html</loc>
   </url>
   <url>
-    <loc>/reference/HighExprsGene-Seurat-numeric-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/HighExprsGene-Seurat-numeric-method.html</loc>
   </url>
   <url>
-    <loc>/reference/HighExprsGene.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/HighExprsGene.html</loc>
   </url>
   <url>
-    <loc>/reference/Splice-class.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/Splice-class.html</loc>
   </url>
   <url>
-    <loc>/reference/annoExonTable.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/annoExonTable.html</loc>
   </url>
   <url>
-    <loc>/reference/beta_dis.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/beta_dis.html</loc>
   </url>
   <url>
-    <loc>/reference/beta_mean.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/beta_mean.html</loc>
   </url>
   <url>
-    <loc>/reference/beta_var.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/beta_var.html</loc>
   </url>
   <url>
-    <loc>/reference/cellGeneExonCount.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/cellGeneExonCount.html</loc>
   </url>
   <url>
-    <loc>/reference/createSpliceObject.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/createSpliceObject.html</loc>
   </url>
   <url>
-    <loc>/reference/createSpliceSeurat.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/createSpliceSeurat.html</loc>
   </url>
   <url>
-    <loc>/reference/dataAnnoCombine.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/dataAnnoCombine.html</loc>
   </url>
   <url>
-    <loc>/reference/exonExonMerge.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonExonMerge.html</loc>
   </url>
   <url>
-    <loc>/reference/exonMatrixMerge.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonMatrixMerge.html</loc>
   </url>
   <url>
-    <loc>/reference/exonTable.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonTable.html</loc>
   </url>
   <url>
-    <loc>/reference/exonTableMerge.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonTableMerge.html</loc>
   </url>
   <url>
-    <loc>/reference/exonTableMergeFlag.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonTableMergeFlag.html</loc>
   </url>
   <url>
-    <loc>/reference/exonTableMergeList.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exonTableMergeList.html</loc>
   </url>
   <url>
-    <loc>/reference/exon_corres.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exon_corres.html</loc>
   </url>
   <url>
-    <loc>/reference/exon_len_filter.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exon_len_filter.html</loc>
   </url>
   <url>
-    <loc>/reference/exon_search.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/exon_search.html</loc>
   </url>
   <url>
-    <loc>/reference/extractExonTable.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/extractExonTable.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_GLRT-Seurat-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_GLRT-Seurat-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_GLRT-Splice-character-vector-vector-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_GLRT-Splice-character-vector-vector-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_GLRT.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_GLRT.base.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_GLRT.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_GLRT.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_phi.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_phi.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_psi-Seurat-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_psi-Seurat-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_psi-Splice-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_psi-Splice-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_psi.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_psi.base.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_psi.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_psi.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table-Seurat-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table-Seurat-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table-Seurat-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table-Seurat-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table-Splice-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table-Splice-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table-Splice-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table-Splice-method.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table.base.html</loc>
   </url>
   <url>
-    <loc>/reference/gene_exons_table.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gene_exons_table.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_exons_phi-Seurat-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_exons_phi-Seurat-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_exons_phi-Splice-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_exons_phi-Splice-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_exons_phi.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_exons_phi.base.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_exons_phi.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_exons_phi.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT-Seurat-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT-Seurat-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT-Seurat-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT-Seurat-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT-Splice-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT-Splice-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT-Splice-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT-Splice-method.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT.base.html</loc>
   </url>
   <url>
-    <loc>/reference/genes_groups_GLRT.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/genes_groups_GLRT.html</loc>
   </url>
   <url>
-    <loc>/reference/getIsoform-Seurat-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/getIsoform-Seurat-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/getIsoform-Splice-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/getIsoform-Splice-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/getIsoform.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/getIsoform.base.html</loc>
   </url>
   <url>
-    <loc>/reference/getIsoform.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/getIsoform.html</loc>
   </url>
   <url>
-    <loc>/reference/getSplice.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/getSplice.html</loc>
   </url>
   <url>
-    <loc>/reference/gtf_bed_corres.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/gtf_bed_corres.html</loc>
   </url>
   <url>
-    <loc>/reference/ifMerge.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/ifMerge.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/ll.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/ll.html</loc>
   </url>
   <url>
-    <loc>/reference/mle_multi_start.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/mle_multi_start.html</loc>
   </url>
   <url>
-    <loc>/reference/moduleExtract.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/moduleExtract.html</loc>
   </url>
   <url>
-    <loc>/reference/multiExonsMerge.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/multiExonsMerge.html</loc>
   </url>
   <url>
-    <loc>/reference/phi.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/phi.html</loc>
   </url>
   <url>
-    <loc>/reference/phiPlot.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/phiPlot.html</loc>
   </url>
   <url>
-    <loc>/reference/phi_conf.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/phi_conf.html</loc>
   </url>
   <url>
-    <loc>/reference/psiCellPlot-Seurat-character-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiCellPlot-Seurat-character-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/psiCellPlot.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiCellPlot.base.html</loc>
   </url>
   <url>
-    <loc>/reference/psiCellPlot.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiCellPlot.html</loc>
   </url>
   <url>
-    <loc>/reference/psiHist-Seurat-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiHist-Seurat-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/psiHist-Splice-character-character-method.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiHist-Splice-character-character-method.html</loc>
   </url>
   <url>
-    <loc>/reference/psiHist.base.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiHist.base.html</loc>
   </url>
   <url>
-    <loc>/reference/psiHist.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/psiHist.html</loc>
   </url>
   <url>
-    <loc>/reference/transcript_corres.html</loc>
+    <loc>https://github.com/yuntianf/Longcell/reference/transcript_corres.html</loc>
   </url>
 </urlset>

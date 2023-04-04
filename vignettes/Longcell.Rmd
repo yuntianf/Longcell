@@ -39,8 +39,8 @@ library(dplyr)
 ### annotation
 
 ```{r}
-gene_bed = readRDS("../tests/annotation/gene_bed.rds")
-gtf = readRDS("../tests/annotation/exon_gtf.rds")
+gene_bed = readRDS(system.file("extdata/annotation", "gene_bed.rds", package = "Longcell"))
+gtf = readRDS(system.file("extdata/annotation", "exon_gtf.rds", package = "Longcell"))
 ```
 
 ### data
@@ -50,7 +50,8 @@ Here we are using the sample of colorecatal metastasis to liver published in our
 We can directly generate a Seurat object from the output of Longcell-pre.The Splice object is embedded in the `misc` slot of the Seurat object, which stores the single cell isoform count. You can get access to it via `getSplice(object)`
 
 ```{r}
-crc = createSpliceSeurat(path = "../tests/data/",project = "colorectal",min.cells = 3,min.features = 200)
+path = system.file("extdata/data/",package = "Longcell")
+crc = createSpliceSeurat(path = path,project = "colorectal",min.cells = 3,min.features = 200)
 ```
 
 ```{r}
@@ -86,7 +87,8 @@ crc <-  crc %>%
 Here we directly use the cell type annotation we get from marker genes to annotate cell clusters.
 
 ```{r}
-cell_type = read.table("../tests/data/cell_type.txt",header = TRUE)
+file = system.file("extdata/data/","cell_type.txt",package = "Longcell")
+cell_type = read.table(file,header = TRUE)
 rownames(cell_type) = cell_type$cell
 crc$type = cell_type[colnames(crc),"type"]
 ```
