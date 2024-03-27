@@ -9,10 +9,7 @@ gene_GLRT.base(
   gene,
   group1,
   group2,
-  gene_bed = NULL,
-  gtf = NULL,
   exons = "all",
-  exon_len_thresh = 10,
   iters = 100,
   psi_num = 500,
   group_cell_thresh = 30,
@@ -29,13 +26,7 @@ gene_GLRT.base(
 
 \item{group2}{cells for group 2}
 
-\item{gene_bed}{a dataframe of gene bed annotation}
-
-\item{gtf}{a dataframe of gtf annotation}
-
 \item{exons}{specified exons to do GLRT}
-
-\item{exon_len_thresh}{the minimum length of exons for GLRT}
 
 \item{iters}{the number of iterations for bootstrap}
 
@@ -46,7 +37,13 @@ the earth-moving distance}
 
 \item{verbose}{whether to print out the iteration information}
 
-\item{...}{parameters specified for gene_exons_table.base()}
+\item{...}{parameters specified for geneSiteTable()}
+
+\item{gene_bed}{a dataframe of gene bed annotation}
+
+\item{gtf}{a dataframe of gtf annotation}
+
+\item{exon_len_thresh}{the minimum length of exons for GLRT}
 }
 \value{
 a dataframe of the test result. Each line is an exon with p-values

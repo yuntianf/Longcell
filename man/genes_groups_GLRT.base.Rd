@@ -9,14 +9,12 @@ genes_groups_GLRT.base(
   genes,
   group1s,
   group2s,
-  gene_bed = NULL,
-  gtf = NULL,
-  exon_len_thresh = 10,
   iters = 100,
   psi_num = 500,
   group_cell_thresh = 30,
   q_thresh = 0.05,
   cores = 4,
+  filter = TRUE,
   verbose = FALSE,
   ...
 )
@@ -29,12 +27,6 @@ genes_groups_GLRT.base(
 \item{group1s}{a named list of cell names, each element should be cells belonging to a group}
 
 \item{group2s}{a named list of cell names, each element should be cells belonging to a group}
-
-\item{gene_bed}{a dataframe of gene bed annotation}
-
-\item{gtf}{a dataframe of gtf annotation}
-
-\item{exon_len_thresh}{the minimum length of exons for GLRT}
 
 \item{iters}{the number of iterations for bootstrap}
 

@@ -21,7 +21,7 @@
 each group. If group_col is specified as a colname in Seurat cell meta data,
 group1 and group2 should be group names.}
 
-\item{...}{parameters specified for gene_exons_table.base()}
+\item{...}{parameters specified for geneSiteTable()}
 }
 \value{
 a dataframe of the test result. Each line is an exon with p-values

@@ -1,7 +1,7 @@
 Package: Longcell
 Type: Package
 Title: Alternative splicing analysis for single cell/visium long reads sequencing
-Version: 0.1.0
+Version: 1.0.0
 Author: Yuntian Fu
 Maintainer: Yuntian Fu <yuntianf@pennmedicine.upenn.edu>
 Description: Longcell can help identify highly variable exons whinin a single cell population, and do differential alternative splicing analysis across two cell populations.
@@ -16,8 +16,10 @@ Suggests:
     rmarkdown
 RoxygenNote: 7.2.3
 Collate: 
+    'beta_binom_mle.R'
     'spliceOb.R'
-    'exon_table.R'
+    'splice_table.R'
     'GLRT_functions.R'
-    'exon_phi.R'
+    'phi.R'
+    'phi_visual.R'
 VignetteBuilder: knitr

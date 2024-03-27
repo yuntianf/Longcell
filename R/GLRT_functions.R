@@ -1,59 +1,7 @@
 #' @include spliceOb.R
-#' @include exon_table.R
-
-
-#' @title negative log likelihood for exon psi
-#' @description compute log likelihood for exon count and gene count given a
-#' beta-binomial distribution
-#' @param exon_count a vector of exon count
-#' @param n a vector of gene count with the same length as exon_count
-#' @param alpha alpha for beta distribution
-#' @param beta beta for beta distribution
-#' @return a numerical value as negative log likelihood
-#' @importFrom extraDistr dbbinom
-ll <- function(exon_count,n,alpha, beta) {
-  temp = sapply(1:length(n), function(i) {
-    -suppressWarnings(extraDistr::dbbinom(exon_count[i], n[i], alpha, beta, log = TRUE))
-  })
-  return(sum(temp))
-}
-
-#' @title mle for beta-binomial
-#' @description mle for beta-binomial with multiple start points to avoid local optimization
-#' @param exon_count a vector of exon count
-#' @param gene_count a vector of gene count with the same length as exon_count
-#' @param start a list of start points, each line should be a pair of alpha and beta
-#' @return a list of result for mle
-#' @importFrom bbmle mle2 summary
-mle_multi_start <- function(exon_count,gene_count,start){
-    test <- lapply(start,function(x){
-        x = as.numeric(x)
-        error <- try({
-          H <- suppressWarnings(bbmle::mle2(ll,start = list(alpha = x[1],beta = x[2]),
-                    data = list(exon_count = exon_count,n = gene_count)))
-            })
-        if(class(error) == "try-error"){
-            return(NULL)
-        }
-        return(H)
-    })
-    test[vapply(test,is.null,logical(1L))] <- NULL
-    if(length(test) == 0){
-        return(NULL)
-    }
-    else{
-        log_lik <- sapply(test,function(x){
-            return(x@min)
-        })
-        p_value <- sapply(test,function(x){
-          test_summary = bbmle::summary(x)
-          p_value = colMeans(test_summary@coef)["Pr(z)"]
-        })
-        id = order(p_value,log_lik)[1]
-        return(test[[id]])
-    }
-}
-
+#' @include splice_table.R
+#' @include beta_binom_mle.R
+#'
 
 #' @title Generalized likelihood ratio test.
 #' @description Using beta-binomial to model the exon count and do
@@ -76,12 +24,10 @@ GLRT <- function(exon_count1,gene_count1,exon_count2,gene_count2,
         stop("The length of exon count and gene count should be the same!")
     }
 
-    start = list(c(0.5,0.5),c(2,2),c(1,3),c(3,1))
-    H1_1 <- mle_multi_start(exon_count1,gene_count1,start = start)
-    H1_2 <- mle_multi_start(exon_count2,gene_count2,start = start)
-    H0 <- mle_multi_start(c(exon_count1,exon_count2),
-                          c(gene_count1,gene_count2),
-                          start = start)
+    H1_1 <- mle_bb(exon_count1,gene_count1)
+    H1_2 <- mle_bb(exon_count2,gene_count2)
+    H0 <- mle_bb(c(exon_count1,exon_count2),
+                          c(gene_count1,gene_count2))
 
     if(is.null(H1_1) | is.null(H1_2) | is.null(H0)){
         print("optimization failed!")
@@ -117,34 +63,49 @@ GLRT <- function(exon_count1,gene_count1,exon_count2,gene_count2,
 #' the earth-moving distance
 #' @param group_cell_thresh the minimum cell number for each group for GLRT
 #' @param verbose whether to print out the iteration information
-#' @param ... parameters specified for gene_exons_table.base()
+#' @param ... parameters specified for geneSiteTable()
 #' @return a dataframe of the test result. Each line is an exon with p-values
 #' and parameters for the psi distributions in two cell populations if they
 #' have significant difference
 gene_GLRT.base <- function(spliceOb,gene,group1,group2,
-                      gene_bed = NULL,gtf = NULL,exons = "all",
-                      exon_len_thresh = 10,
-                      iters = 100,psi_num = 500,
-                      group_cell_thresh = 30,
-                      verbose = FALSE,...){
-  count_list = gene_exons_table.base(spliceOb,gene,
-                                     gene_bed = gene_bed,gtf = gtf,
-                                     cells = c(group1,group2),exons = exons,
-                                     exon_len_thresh = exon_len_thresh,...)
-
-  gene_count_table = count_list[[1]]
-  exon_count_table = count_list[[2]]
-
-  gene_count_table1 = gene_count_table[gene_count_table$cell_id %in% group1,]
-  gene_count_table2 = gene_count_table[gene_count_table$cell_id %in% group2,]
-  exon_count_table1 = exon_count_table[exon_count_table$cell_id %in% group1,]
-  exon_count_table2 = exon_count_table[exon_count_table$cell_id %in% group2,]
-
-  if(nrow(gene_count_table1) < group_cell_thresh |
-     nrow(gene_count_table2) < group_cell_thresh){
+                           exons = "all",
+                           iters = 100,psi_num = 500,
+                           group_cell_thresh = 30,
+                           verbose = FALSE,...){
+  if(is.null(spliceOb@meta_sites[[gene]])){
+    warning("The splice site table is not pre-computed,
+            please run geneSiteTable for the target gene first!")
     return(NULL)
   }
-  exons = setdiff(colnames(exon_count_table),c("cell_id","gene_count"))
+  count_list = spliceOb@meta_sites[[gene]]
+
+  gene_count_table = count_list@cellGeneCount
+  exon_count_table = count_list@cellSiteCount
+
+  group1 = group1[group1 %in% rownames(gene_count_table)]
+  group2 = group2[group2 %in% rownames(gene_count_table)]
+
+  gene_count_table1 = gene_count_table[group1,,drop=FALSE]
+  gene_count_table2 = gene_count_table[group2,,drop=FALSE]
+  exon_count_table1 = exon_count_table[group1,,drop=FALSE]
+  exon_count_table2 = exon_count_table[group2,,drop=FALSE]
+
+  if(nrow(gene_count_table1) < group_cell_thresh ||
+     nrow(gene_count_table2) < group_cell_thresh){
+    if(verbose){
+      cat("The cell number for this gene is not enough, will skip!\n")
+    }
+    return(NULL)
+  }
+  if(exons == "all"){
+    exons = colnames(exon_count_table)
+  }
+  else if(is.numeric(exons)){
+    exons = colnames(exon_count_table)[exons]
+  }
+  else{
+    exons = exons[exons %in% colnames(exon_count_table)]
+  }
 
   test = lapply(exons,function(i){
     exon_count1 = round(unlist(exon_count_table1[,i]))
@@ -176,7 +137,7 @@ gene_GLRT.base <- function(spliceOb,gene,group1,group2,
 
   test = as.data.frame(do.call(rbind,test))
   if(length(test) > 0 && nrow(test) > 0){
-    colnames(test) = c("exon","p","alpha1","beta1","alpha2","beta2")
+    colnames(test) = c("site","p","alpha1","beta1","alpha2","beta2")
     #                   "dis_left","dis","dis_right")
     return(test)
   }
@@ -284,10 +245,8 @@ beta_dis <- function(exon_count1,gene_count1,exon_count2,gene_count2,
     id1 <- sample(1:length(gene_count1),length(gene_count1),replace = TRUE)
     id2 <- sample(1:length(gene_count2),length(gene_count2),replace = TRUE)
 
-    start = list(c(0.5,0.5),c(2,2),c(1,3),c(3,1))
-
-    H1_1 <- mle_multi_start(exon_count1[id1],gene_count1[id1],start = start)
-    H1_2 <- mle_multi_start(exon_count2[id2],gene_count2[id2],start = start)
+    H1_1 <- mle_bb(exon_count1[id1],gene_count1[id1])
+    H1_2 <- mle_bb(exon_count2[id2],gene_count2[id2])
 
     if(is.null(H1_1) | is.null(H1_2)){
       return(NULL)
@@ -324,23 +283,26 @@ beta_dis <- function(exon_count1,gene_count1,exon_count2,gene_count2,
 #' and parameters for the psi distributions in two cell populations if they
 #' have significant difference
 genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
-                              gene_bed = NULL,gtf = NULL,
-                              exon_len_thresh = 10,
                               iters = 100,psi_num = 500,
                               group_cell_thresh = 30,q_thresh = 0.05,
-                              cores = 4,verbose = FALSE,...){
+                              cores = 4,filter = TRUE,verbose = FALSE,...){
   core_avai = parallel::detectCores()
   cores = ifelse(cores > core_avai,core_avai,cores)
   cat("The job will be paralleled on ",cores," cores.\n")
+  if(is.null(names(group1s))){
+    names(group1s) = 1:length(group1s)
+  }
+  if(is.null(names(group2s))){
+    names(group2s) = 1:length(group2s)
+  }
   #results <- lapply(genes,function(i){
   results <- parallel::mclapply(genes,function(i){
         group1 <- lapply(1:length(group1s),function(x){
             group2 <- lapply(1:length(group2s),function(y){
                 error <- try({
                   test = gene_GLRT.base(spliceOb,gene = i,
-                                        group1 = group1s[[x]],group2 = group2s[[y]],
-                                        gene_bed = gene_bed,gtf = gtf,
-                                        exon_len_thresh = exon_len_thresh,
+                                        group1 = group1s[[x]],
+                                        group2 = group2s[[y]],
                                         iters = iters,psi_num = psi_num,
                                         group_cell_thresh = group_cell_thresh,
                                         verbose = verbose,...)
@@ -348,10 +310,6 @@ genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
 
                 group_name1 = names(group1s)[x]
                 group_name2 = names(group2s)[y]
-
-                if(is.null(group_name1) || is.null(group_name2)){
-                  warnings("The name for the cell group are not provided, will set with null!\n")
-                }
 
                 if(class(error) == "try-error"){
                   cat("Something wrong happened for GLRT of gene ",i,
@@ -378,16 +336,19 @@ genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
   #})
     results <- as.data.frame(do.call(rbind,results))
     if(length(results) >0 && nrow(results) > 0){
-      results <- results %>% mutate_at(vars(-all_of(c("gene","exon","group1","group2"))),
+      results <- results %>% mutate_at(vars(-all_of(c("gene","site","group1","group2"))),
                                        as.numeric)
-      results$q = p.adjust(p = results$p,method = "fdr",n = nrow(results))
-      results = results[results$q <= q_thresh,]
+      if(filter == TRUE){
+        results$q = p.adjust(p = results$p,method = "fdr",n = nrow(results))
+        results = results[results$q <= q_thresh,]
 
-      results$mean_diff <- beta_mean(results$alpha2,results$beta2) -
-        beta_mean(results$alpha1,results$beta1)
-      results$var_diff <- beta_var(results$alpha2,results$beta2) -
-        beta_var(results$alpha1,results$beta1)
+        results$mean_diff <- beta_mean(results$alpha2,results$beta2) -
+          beta_mean(results$alpha1,results$beta1)
+        results$var_diff <- beta_var(results$alpha2,results$beta2) -
+          beta_var(results$alpha1,results$beta1)
+      }
     }
+
     return(results)
 }
 
@@ -492,7 +453,8 @@ GLRT_sig_plot = function(data,gene_col = "gene",
 
   out = ggplot()+
     geom_point(data = data,aes_string(x = mean_diff,y=var_diff,color ="log_q"),size = pt.size)+
-    scale_color_gradient2(low = low,mid = mid,high = high,midpoint = q_mid)+
+    #scale_color_gradient2(low = low,mid = mid,high = high,midpoint = q_mid)+
+    scale_color_gradientn(name = "-log(q)",colors = rev(brewer.pal(11, "RdYlBu")))+
     geom_text(data = data[data$log_q > q_thresh,],
               aes_string(x = mean_diff,y = var_diff,label = gene_col),
               nudge_x = 0, nudge_y = 0, check_overlap = T,size =text.size)+

@@ -15,7 +15,7 @@
 
 \item{group2}{cells for group 2}
 
-\item{...}{parameters specified for gene_exons_table.base()}
+\item{...}{parameters specified for geneSiteTable()}
 }
 \value{
 a dataframe of the test result. Each line is an exon with p-values

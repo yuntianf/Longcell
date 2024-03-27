@@ -1,5 +1,42 @@
 #' @import methods
 
+#' @title The metaSite Class
+#' @description The metaSite class is an object to store the meta splicing sites information. It includes three slots, the gene
+#' count and spliced-in count per cell for each meta site the orginal splicing sites that each meta site corresponds to.
+#' @slot cellGeneCount A cell by meta site matrix, recording the gene expression count.
+#' @slot cellSiteCount A cell by meta site matrix, recording the spliced-in count.
+#' @slot sites A list with length as the number of meta splicing sites, Each element records the corresponding original splicing sites.
+#' @name metaSite-class
+#' @rdname metaSite-class
+#' @concept objects
+#' @exportClass metaSite
+#'
+setClass("metaSite",
+         representation(sites = "list",
+                        cellGeneCount = "data.frame",
+                        cellSiteCount = "data.frame"),
+         prototype(sites = NULL,cellGeneCount = NULL,cellSiteCount = NULL))
+
+setMethod("show",
+          signature(object="metaSite"),
+          function(object) {
+            if(length(object@sites) > 0){
+              cat("metaSite object with ", nrow(object@cellGeneCount)," cells and ",
+                  ncol(object@cellGeneCount), "meta splicing sites, which are merged from ",
+                  length(unlist(object@sites)), "original splicing sites.\n")
+              cat("The head of the gene count matrix for each meta site is:\n")
+              print(head(object@cellGeneCount))
+              cat("The head of the spliced in count matrix for each meta site is:\n")
+              print(head(object@cellSiteCount))
+            }
+            else{
+              cat("Empty metaSite object.")
+            }
+          })
+
+
+
+
 #' @title The Splice Class
 #' @description The Splice class is an intermediate data storage class that stores the isoforms and other
 #' related information needed for performing downstream analyses: including highly variable
@@ -19,17 +56,22 @@ setClass("Splice",
          representation(cells = "vector",
                         genes = "vector",
                         isoforms = "vector",
-                        count = "data.frame"),
-         prototype(cells = NULL, genes = NULL,isoforms = NULL,count = NULL))
+                        count = "data.frame",
+                        meta_sites = "list"),
+         prototype(cells = NULL, genes = NULL,
+                   isoforms = NULL,count = NULL,
+                   meta_sites = NULL))
 
 setMethod("show",
           signature(object="Splice"),
           function(object) {
             cat("Splice object with ", length(object@cells),
-                " cells and ", length(object@genes), "genes")
+                " cells and ", length(object@genes), " genes\n")
+            cat("The top 10 cells are:", paste(head(object@cells,10),collapse = ","),"\n")
+            cat("The top 10 genes are:", paste(head(object@genes,10),collapse = ","),"\n")
           })
 
-#' @title Create a Splice object
+#' @title createSplice
 #'
 #' @description Create a Splice object from the output file from saveExonList().
 #' @details Create a Splice object from the output file from saveExonList().
@@ -43,7 +85,7 @@ setMethod("show",
 #' @importFrom utils read.table
 #' @export
 #'
-createSpliceObject <- function(path,cell = "all", gene = "all",
+createSplice <- function(path,cell = "all", gene = "all",
                                cell_col = "cell",gene_col = "gene",iso_col = "exons"){
   cells = scan(paste(path,"barcodes.tsv",sep = "/"),character(), quote = "")
   genes = scan(paste(path,"features.tsv",sep = "/"),character(), quote = "")
@@ -67,67 +109,85 @@ createSpliceObject <- function(path,cell = "all", gene = "all",
   count[,gene_col] = as.numeric(as.factor(count[,gene_col]))
   count[,iso_col] = as.numeric(as.factor(count[,iso_col]))
 
-  object = new("Splice",
+  splice_object = new("Splice",
                cells = cells,genes = genes,
-               isoforms = isoforms, count = count)
+               isoforms = isoforms, count = count,
+               meta_sites = list())
   return(object)
 }
 
-#' @title Create a Seurat object with Splice object
+#' @title creatSplice_from_df
 #'
-#' @description Create a Seurat and Splice object from the output file from saveExonList().
-#' @details The Seraut object is created to store the gene expression information,
-#' and the Splice object for isoform information. The Splice object is embedded in the
-#' misc slot in Seurat object
+#' @description Create a Splice object from the output file from a dataframe.
+#' @details Create a Splice object from the output file from dataframe, the dataframe should
+#' contain at least four columns, including cell, gene, isoform and umi count.
 #'
-#' @param path The path to store the output files from saveExonList()
-#' @param project The name of the project for this object
-#' @param assay The assay name for the count matrix
-#' @param min.cells The minimum number of cells to express a gene
-#' @param min.features The minimum number of genes cell to express
-#' @param names.field For the initial identity class for each cell, choose this field from the cell's name.
-#' @param names.delim For the initial identity class for each cell, choose this delimiter from the cell's column name
-#' @param meta.data Additional cell-level metadata to add to the Seurat object.
-#' @param ... other parameters for Seurat::CreateSeuratObject
-#' @import Seurat
-#' @importFrom Matrix sparseMatrix
-#' @importFrom utils read.table
+#' @param df The input dataframe.
+#' @inheritParams createSplice
+#' @importFrom dplyr mutate_at
+#' @importFrom magrittr %>%
+#' @return A Splice object
 #' @export
 #'
-createSpliceSeurat <- function(path,project = "SeuratProject", assay = "RNA",
-                               min.cells = 3, min.features = 20, names.field = 1,
-                               names.delim = "_", meta.data = NULL,...){
-  cells = scan(paste(path,"barcodes.tsv",sep = "/"),character(), quote = "")
-  genes = scan(paste(path,"features.tsv",sep = "/"),character(), quote = "")
-  count = read.table(paste(path,"matrix.mtx",sep = "/"))
-  colnames(count) = c("cell","gene","count")
+creatSplice_from_df <- function(df,cell = "all",gene = "all",
+                                cell_col = "cell",gene_col = "gene",
+                                iso_col = "isoform",exprs_col = "count"){
+  df = as.data.frame(df)
+  nece = c(cell_col,gene_col,iso_col,exprs_col)
+  meta = setdiff(colnames(df),nece)
+  df = df[,c(nece,meta)]
+  colnames(df)[1:length(nece)] = c("cell","gene","isoform","count")
 
-  count$cell = as.factor(count$cell)
-  count$gene = as.factor(count$gene)
-  count_matrix = Matrix::sparseMatrix(j=as.numeric(count$cell),
-                              i=as.numeric(count$gene),
-                              x=as.numeric(count$count),
-                              dimnames=list(genes,cells))
+  if(cell[1] != "all"){
+    df = df[df$cell %in% cell,]
+  }
+  if(gene[1] != "all"){
+    df = df[df$gene %in% gene,]
+  }
 
-  object = Seurat::CreateSeuratObject(counts = count_matrix,...)
+  cells = names(table(df$cell))
+  genes = names(table(df$gene))
+  isoforms = names(table(df$isoform))
 
-  spliceOb = createSpliceObject(path,
-                                cell = colnames(object),
-                                gene = rownames(object))
-  Seurat::Misc(object,slot = "splice") = spliceOb
-  return(object)
+  df = df %>% mutate_at(c("cell","gene","isoform"),~as.numeric(as.factor(.)))
+
+  splice_object = new("Splice",
+                      cells = cells,genes = genes,
+                      isoforms = isoforms, count = df,
+                      meta_sites = list())
+  return(splice_object)
 }
 
-#' @title extract the Splice object from the Seurat object
-#' @description  extract the Splice object from the Seurat object
-#' @param object A seurat object with a Splice object embedded in
-#' @param slot the slot name to store Splice object in Seurat object
-#' @return A Splice object.
-#' @import Seurat
+#' @title getMetaSites
+#' @description Extract the metaSites object for a gene for a subset of cells from the splice object
+#' @param spliceOb the Splice object
+#' @param gene name of the target gene
+#' @param cells cells to use in building exon count table
+#' @return a metaSite object
 #' @export
-getSplice <- function(object,slot = "splice"){
-  splice = Misc(object)[[slot]]
-  return(splice)
+getMetaSites = function(spliceOb,gene,cells = "all"){
+  if(is.null(spliceOb@meta_sites[[gene]])){
+    stop("The set of meta splicing sites for gene ", gene,
+         " hasn't been built yet, please run geneSiteTable() first!")
+  }
+
+  meta_sites = spliceOb@meta_sites[[gene]]
+  if(cells == "all"){
+    cells = rownames(meta_sites@cellGeneCount)
+  }
+  else{
+    diff = setdiff(cells,rownames(meta_sites@cellGeneCount))
+    if(length(diff) > 0){
+      warning(paste(head(diff,10),collapse = ","),"... don't have enough expression for this gene ",
+              gene," will be ignored!")
+    }
+    cells = cells[cells %in% rownames(meta_sites@cellGeneCount)]
+  }
+
+  meta_sites@cellGeneCount = meta_sites@cellGeneCount[cells,]
+  meta_sites@cellSiteCount = meta_sites@cellSiteCount[cells,]
+
+  return(meta_sites)
 }
 
 #' @title extract isoforms
@@ -154,7 +214,7 @@ getIsoform.base <- function(spliceob,genes, cells = "all"){
 
   select_iso$gene = spliceob@genes[select_iso$gene]
   select_iso$cell = spliceob@cells[select_iso$cell]
-  select_iso$exons = spliceob@isoforms[select_iso$exons]
+  select_iso$isoform = spliceob@isoforms[select_iso$isoform]
 
   return(select_iso)
 }
@@ -183,21 +243,3 @@ setMethod("getIsoform",
           }
 )
 
-#' @title generic getIsoform function for Seurat object
-#' @description  extract isoforms for multigenes from selected cells for Seurat object
-#' @param object a Seurat object
-#' @param slot the slot name to store Splice object in Seurat object
-#' @inheritParams getIsoform.base
-#' @param ... parameters for getIsoform.base
-#' @import Seurat
-#' @return A dataframe which store the expression and related information for each
-#' isoform.
-#'
-#' @export
-setMethod("getIsoform",
-          signature(object = "Seurat",genes = "character"),
-          function(object,genes, slot = "splice",...){
-            spliceOb = getSplice(object,slot = slot)
-            getIsoform.base(spliceOb,genes = genes,...)
-          }
-)
