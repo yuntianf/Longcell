@@ -2,19 +2,39 @@
 % Please edit documentation in R/phi_visual.R
 \name{psiCellPlot}
 \alias{psiCellPlot}
-\title{generic psiCellPlot function definition}
+\title{psiCellPlot}
 \usage{
-psiCellPlot(object, gene, exons, cell_embedding, ...)
+psiCellPlot(
+  spliceOb,
+  gene,
+  sites,
+  cell_embedding,
+  dims = c(1, 2),
+  cells = "all",
+  exprs_thresh = 10,
+  ...
+)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{spliceOb}{a Splice object}
 
 \item{gene}{the name of specified gene}
 
+\item{sites}{the selected exon to be plot}
+
 \item{cell_embedding}{A dataframe of cell embedding coordinates}
 
-\item{...}{parameters for psiCellPlot.base}
+\item{dims}{Two dimensions to use to plot cell embedding}
+
+\item{cells}{the cells to be included in the psi plot}
+
+\item{exprs_thresh}{the minimum gene expression required for psi calculation}
+
+\item{...}{parameters for gene_exons_psi.base to calculate psi value}
+}
+\value{
+a ggplot object of psi in cell embedding
 }
 \description{
-generic psiCellPlot function definition
+plot psi value in cell embeddings
 }

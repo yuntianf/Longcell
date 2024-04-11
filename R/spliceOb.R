@@ -162,21 +162,22 @@ creatSplice_from_df <- function(df,cell = "all",gene = "all",
 #' @param spliceOb the Splice object
 #' @param gene name of the target gene
 #' @param cells cells to use in building exon count table
+#' @param verbose The flag to indicate if output message
 #' @return a metaSite object
 #' @export
-getMetaSites = function(spliceOb,gene,cells = "all"){
+getMetaSites = function(spliceOb,gene,cells = "all",verbose = TRUE){
   if(is.null(spliceOb@meta_sites[[gene]])){
     stop("The set of meta splicing sites for gene ", gene,
          " hasn't been built yet, please run geneSiteTable() first!")
   }
 
   meta_sites = spliceOb@meta_sites[[gene]]
-  if(cells == "all"){
+  if(cells[1] == "all"){
     cells = rownames(meta_sites@cellGeneCount)
   }
   else{
     diff = setdiff(cells,rownames(meta_sites@cellGeneCount))
-    if(length(diff) > 0){
+    if(length(diff) > 0 & verbose){
       warning(paste(head(diff,10),collapse = ","),"... don't have enough expression for this gene ",
               gene," will be ignored!")
     }

@@ -57,7 +57,7 @@ psiHist.base <- function(spliceOb, gene, site, cells = "all",
                          binwidth = 0.05,low = "steelblue",
                          high = "coral",mid = "whitesmoke",
                          midpoint = NULL,binsize = 8){
-  count_list = getMetasites.base(spliceOb,gene)
+  count_list = getMetaSites(spliceOb,gene,cells,verbose = FALSE)
   gene_count_table = count_list@cellGeneCount
   exon_count_table = count_list@cellSiteCount
   metasite = count_list@sites
@@ -65,8 +65,8 @@ psiHist.base <- function(spliceOb, gene, site, cells = "all",
   if(cells[1] != "all"){
     allcells = rownames(gene_count_table)
     cells = cells[cells %in% allcells]
-    gene_count_table = gene_count_table[cells,]
-    exon_count_table = exon_count_table[cells,]
+    gene_count_table = gene_count_table[cells,,drop = FALSE]
+    exon_count_table = exon_count_table[cells,,drop = FALSE]
   }
 
   if(site %in% colnames(gene_count_table)){
@@ -97,9 +97,8 @@ psiHist.base <- function(spliceOb, gene, site, cells = "all",
   plot_data$freq = plot_data$count/sum(plot_data$count)
   plot_data$freq = plot_data$freq/binwidth
 
-  plot_data$psi_bin = as.numeric(plot_data$psi_bin)
-  plot_data$psi_bin = plot_data$psi_bin/max(plot_data$psi_bin)
-  plot_data$psi_bin = plot_data$psi_bin-min(plot_data$psi_bin)/2
+  plot_data = plot_data %>% mutate(psi_bin = as.numeric(psi_bin)) %>%
+    mutate(psi_bin = binwidth*(psi_bin-1) + binwidth/2)
 
   if(is.null(midpoint)){
     midpoint = median(plot_data$gene)
@@ -146,7 +145,7 @@ setMethod("psiHist",
 )
 
 
-#' @title psiCellPlot.base
+#' @title psiCellPlot
 #' @description plot psi value in cell embeddings
 #' @param spliceOb a Splice object
 #' @param gene the name of specified gene
@@ -161,7 +160,7 @@ setMethod("psiHist",
 #' @importFrom latex2exp TeX
 #' @importFrom stats median na.omit
 #' @export
-psiCellPlot.base = function(spliceOb,gene,sites,cell_embedding,dims = c(1,2),
+psiCellPlot = function(spliceOb,gene,sites,cell_embedding,dims = c(1,2),
                             cells = "all",exprs_thresh = 10,...){
   cell_embedding = as.data.frame(cell_embedding)
   dims = colnames(cell_embedding)[dims]
@@ -197,13 +196,186 @@ psiCellPlot.base = function(spliceOb,gene,sites,cell_embedding,dims = c(1,2),
   return(out_plot)
 }
 
+#' @title isoform2bases
+#' @description transform an isoform sequence into a vector of base this isoform covered
+#' @param isoform The isoform sequence, should be formatted as "s1,e1|s2,e2|...", s means the start site of an exon
+#' while e means the end site.
+#' @param count The count for each base
+#' @param sep The character to split the start and end sites of an exon.
+#' @param split The character to split the exon in the isoform sequence.
+#' @return a vector of bases
+isoform2bases <- function(isoform,count = 1,
+                          sep = ",",split = "|"){
+  exons = unlist(strsplit(isoform,split = split,fixed = TRUE))
 
-#' @title generic psiCellPlot function definition
-#' @param object the Splice or Seurat object
-#' @inheritParams psiCellPlot.base
-#' @param ... parameters for psiCellPlot.base
-#' @export
-setGeneric("psiCellPlot",
-           function(object,gene,exons,cell_embedding,...)
-             standardGeneric("psiCellPlot"))
+  bases = lapply(exons,function(x){
+    x = unlist(strsplit(x,split = sep,fixed = TRUE))
+    left = as.numeric(x[1])
+    right = as.numeric(x[2])
+    return(c(left:right))
+  })
+  bases = rep(unlist(bases),count)
+  return(bases)
+}
 
+#' @title junction_count
+#' @description collect the splice junction in an isoform sequence
+#' @inheritParams isoform2bases
+#' @param polyA A flag to indicate if the read has a polyA tail
+#' @return A matrix recording the junction count, the first column is the junction
+#' identity and the second column is the count
+junction_count <- function(isoform,count = 1,polyA = 0,
+                           sep = ",",split = "|"){
+  junctions = unlist(strsplit(isoform,split = sep,fixed = TRUE))
+  end = junctions[length(junctions)]
+  if(length(junctions) > 2){
+    junctions = junctions[2:(length(junctions)-1)]
+    junc_count = lapply(junctions,function(x){
+      x = unlist(strsplit(x,split = split,fixed = TRUE))
+      return(x)
+    })
+    junc_count = do.call(rbind,junc_count)
+    junc_count = cbind(junc_count,count)
+  }
+  else{
+    junc_count = NULL
+  }
+  if(polyA > 0.5){
+    end_count = c(end,"polyA",count)
+  }
+  else{
+    end_count = NULL
+  }
+  junc_count = rbind(junc_count,end_count)
+  return(junc_count)
+}
+
+#' @title sashimi_plot_data
+#' @description transform the isoform count data to the format for sahimi plot
+#' @inheritParams junction_count
+#' @return A list recording the base count and the junction count.
+sashimi_plot_data <- function(isoforms,counts,polyA = NULL,
+                              sep = ",",split = "|"){
+  if(length(isoforms) != length(counts)){
+    stop("The size of isoforms and their counts don't match!")
+  }
+  if(!is.null(polyA)){
+    if(length(polyA) != length(isoforms)){
+      stop("The size of isoforms and their polyA don't match!")
+    }
+  }
+  else{
+    polyA = rep(0,length(isoforms))
+  }
+
+  iso_count = as.data.frame(cbind(isoforms,counts))
+  colnames(iso_count) = c("isoform","count")
+  iso_count$count = as.numeric(iso_count$count)
+  iso_count = iso_count %>%
+    group_by(isoform) %>%
+    summarise(count = sum(count))
+  bases = lapply(1:nrow(iso_count),function(i){
+    isoform = iso_count$isoform[i]
+    count = iso_count$count[i]
+    sub_base = isoform2bases(isoform = isoform,count = count,
+                             sep = sep,split = split)
+    return(sub_base)
+  })
+  bases = as.data.frame(table(unlist(bases)))
+  colnames(bases) = c("chr","coverage")
+  bases$chr = as.numeric(as.character(bases$chr))
+
+  junctions = lapply(1:length(isoforms),function(i){
+    sub_junc = junction_count(isoform = isoforms[i],count = counts[i],
+                              polyA = polyA[i],sep = sep,split = split)
+    return(sub_junc)
+  })
+  junctions = as.data.frame(do.call(rbind,junctions))
+  colnames(junctions) = c("start","end","count")
+  junctions$count = as.numeric(junctions$count)
+  junctions = junctions %>%
+    group_by(start,end) %>%
+    summarise(count = sum(count),.groups = "drop")
+
+  return(list(bases,junctions))
+}
+
+#' @title range_scale
+#' @description scale the data into a fixed range
+#' @param data a numeric vector
+#' @param lwr,upr the lower/upper bound of the range
+#' @return a numeric vector recording the scaled data
+range_scale = function(data,lwr = 1,upr = 5){
+  diff = max(data)-min(data)
+  unit = (upr-lwr)/diff
+  scale_data = (data-min(data))*unit+lwr
+  return(scale_data)
+}
+
+
+#' @title sashimi_plot
+#' @description generate the sashimi plot for the isoform
+#' @param coverage The base count
+#' @param junction The junction count
+#' @param filter_ratio Threshold to filter out lowly covered base
+#' @param color_id The prdefined color set to use, currently there are two sets
+#' @param region The xlab annotation for the sashimi plot
+#' @inheritParams range_scale
+#' @param color_set a vector to record user defined color set to use, should include two colors, one for the
+#' base coverage and the other for the junction connection.
+#' @import ggplot2
+#' @importFrom geomtextpath geom_textcurve
+#' @return a ggplot object.
+sashimi_plot <- function(coverage,junction,filter_ratio = 20,
+                         color_id = 1,region = NULL,lwr = 1,upr = 5,
+                         color_set = NULL){
+  rownames(coverage) = coverage$chr
+
+  junction$y_start = coverage[junction$start,"coverage"]
+  junction$y_end = coverage[junction$end,"coverage"]
+  junction = na.omit(junction)
+  junction$start = as.numeric(junction$start)
+  junction$end = as.numeric(junction$end)
+
+  filter = max(coverage$coverage)/filter_ratio
+  junction_filter = junction[junction$count > filter &
+                               junction$y_start > filter &
+                               junction$y_end > filter,]
+
+  if(is.null(region)){
+    region = "chr"
+  }
+  if(is.null(color_set)){
+    color_set = list(c("steelblue","LightSkyBlue"),c("coral","LightSalmon"))
+  }
+
+  sashimi = ggplot()+
+    geom_segment(data = coverage,aes(x = chr,y = coverage,xend = chr,yend = 0),
+                 color = color_set[[color_id]][1],alpha = 0.5)+
+    geom_textcurve(data = junction_filter,aes(x = start,y = y_start,xend = end,yend = y_end,label = round(count),
+                                              linewidth = range_scale(log(count,10),lwr = lwr,upr = upr)),
+                   linecolour = color_set[[color_id]][2],lineend = "butt",curvature = -0.1,textcolour = "black",
+                   alpha = 0.75)+
+    theme_classic()+
+    xlab(region)+ylab("reads coverage")+ylim(c(0,max(coverage$coverage)*1.3))+
+    theme(text = element_text(size = 15))+
+    theme(legend.position="none")
+
+  return(sashimi)
+}
+
+#' @title sashimi
+#' @description generate the sashimi plot for a gene from the Splice object
+#' @param spliceOb The input splice object
+#' @param gene The target gene
+#' @param cells The target cell population
+#' @param ... Omitted parameters for aesthetic  parameters in sashimi_plot
+#' @return a ggplot object.
+sashimi <- function(spliceOb,gene,cells,...){
+  data = getIsoform(spliceOb,gene,cells)
+
+  sashimi_data = sashimi_plot_data(data$isoform,data$count)
+  out_plot = sashimi_plot(sashimi_data[[1]],sashimi_data[[2]],...)
+
+  return(out_plot)
+}

@@ -200,8 +200,13 @@ geneSitesPhi_from_beta = function(spliceOb,gene,cells = "all",
     }
   })
   sites_phi = as.data.frame(do.call(rbind,sites_phi))
-  colnames(sites_phi) <- c("meta_sites","mean_psi","phi","phi_lwr","phi_upr","count")
-  sites_phi = sites_phi %>% mutate_at(setdiff(colnames(sites_phi),"meta_sites"),as.numeric)
+  if(length(sites_phi) > 0){
+    colnames(sites_phi) <- c("meta_sites","mean_psi","phi","phi_lwr","phi_upr","count")
+    sites_phi = sites_phi %>% mutate_at(setdiff(colnames(sites_phi),"meta_sites"),as.numeric)
+  }
+  else{
+    return(NULL)
+  }
 
   return(sites_phi)
 }
@@ -215,8 +220,7 @@ geneSitesPhi_from_beta = function(spliceOb,gene,cells = "all",
 #' @param phi_conf_thresh The maximum length of confidence interval to filter out inconfident
 #' phi estimation
 #' @param method The method to use for phi estimation
-#' @param cores The number of cores for parallization
-#' @param mode The mode of parallization
+#' @param verbose The flag to indeicate if the intermediate messages should be printed
 #' @importFrom stats na.omit
 #' @importFrom parallel detectCores
 #' @importFrom future sequential
@@ -233,7 +237,7 @@ genesSitesPhi.base <- function(spliceOb,genes,
                                  psi_lwr = 0.1, psi_upr = 0.9,
                                  phi_conf_thresh = 0.2,
                                  method = match.arg("beta","psi"),
-                                 CI_level = 0.05,...){
+                                 CI_level = 0.05,verbose = TRUE,...){
   phi <- future_lapply(genes,function(x){
     error <- try({
       if(method == "psi"){
@@ -256,7 +260,9 @@ genesSitesPhi.base <- function(spliceOb,genes,
       return(temp)
     })
     if(class(error) == "try-error"){
-      cat("The phi estimation failed for the gene ",x,"!\n")
+      if(verbose){
+        cat("The phi estimation failed for the gene ",x,"!\n")
+      }
       return(NULL)
     }
   },future.seed = TRUE,future.packages = c("Longcell"))

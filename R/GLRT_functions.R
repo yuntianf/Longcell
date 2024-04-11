@@ -278,17 +278,17 @@ beta_dis <- function(exon_count1,gene_count1,exon_count2,gene_count2,
 #' @inheritParams gene_GLRT.base
 #' @import dplyr
 #' @importFrom stats p.adjust
-#' @importFrom parallel mclapply detectCores
+#' @importFrom future sequential
+#' @importFrom future multisession
+#' @importFrom future multicore
+#' @importFrom future.apply future_lapply
 #' @return a dataframe of the test result. Each line is an exon with p-values
 #' and parameters for the psi distributions in two cell populations if they
 #' have significant difference
 genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
                               iters = 100,psi_num = 500,
                               group_cell_thresh = 30,q_thresh = 0.05,
-                              cores = 4,filter = TRUE,verbose = FALSE,...){
-  core_avai = parallel::detectCores()
-  cores = ifelse(cores > core_avai,core_avai,cores)
-  cat("The job will be paralleled on ",cores," cores.\n")
+                              filter = TRUE,verbose = FALSE,...){
   if(is.null(names(group1s))){
     names(group1s) = 1:length(group1s)
   }
@@ -296,7 +296,7 @@ genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
     names(group2s) = 1:length(group2s)
   }
   #results <- lapply(genes,function(i){
-  results <- parallel::mclapply(genes,function(i){
+  results <- future_lapply(genes,function(i){
         group1 <- lapply(1:length(group1s),function(x){
             group2 <- lapply(1:length(group2s),function(y){
                 error <- try({
@@ -332,7 +332,7 @@ genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
           colnames(group1)[1] = "gene"
         }
         return(group1)
-    }, mc.cores = getOption("mc.cores", cores))
+    }, future.seed = TRUE,future.packages = c("Longcell"))
   #})
     results <- as.data.frame(do.call(rbind,results))
     if(length(results) >0 && nrow(results) > 0){
@@ -371,7 +371,7 @@ setGeneric("genes_groups_GLRT",
 #' @export
 setMethod("genes_groups_GLRT",
           signature(object = "Splice",genes = "character",
-                    group1s = "character",group2s = "character"),
+                    group1s = "list",group2s = "list"),
           function(object,genes,group1s,group2s,...){
             genes_groups_GLRT.base(spliceOb = object,genes = genes,
                                   group1s = group1s,group2s = group2s,...)
@@ -440,6 +440,7 @@ setMethod("genes_groups_GLRT",
 #' @param low,mid,high The color to indicate the q value
 #' @import ggplot2
 #' @importFrom latex2exp TeX
+#' @importFrom ggrepel geom_text_repel
 #' @return a ggplot object
 #' @export
 GLRT_sig_plot = function(data,gene_col = "gene",
@@ -454,10 +455,9 @@ GLRT_sig_plot = function(data,gene_col = "gene",
   out = ggplot()+
     geom_point(data = data,aes_string(x = mean_diff,y=var_diff,color ="log_q"),size = pt.size)+
     #scale_color_gradient2(low = low,mid = mid,high = high,midpoint = q_mid)+
-    scale_color_gradientn(name = "-log(q)",colors = rev(brewer.pal(11, "RdYlBu")))+
-    geom_text(data = data[data$log_q > q_thresh,],
-              aes_string(x = mean_diff,y = var_diff,label = gene_col),
-              nudge_x = 0, nudge_y = 0, check_overlap = T,size =text.size)+
+    scale_color_gradientn(name = "-log(q)",colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu")))+
+    ggrepel::geom_text_repel(data = data[data$log_q > q_thresh,],
+              aes_string(x = mean_diff,y = var_diff,label = gene_col),size =text.size)+
     xlab(latex2exp::TeX("mean change of $\\psi$"))+ylab(latex2exp::TeX("var change of $\\psi$"))+
     theme_classic()+
     theme(text = element_text(size = 15))

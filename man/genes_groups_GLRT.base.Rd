@@ -13,7 +13,6 @@ genes_groups_GLRT.base(
   psi_num = 500,
   group_cell_thresh = 30,
   q_thresh = 0.05,
-  cores = 4,
   filter = TRUE,
   verbose = FALSE,
   ...
@@ -37,11 +36,11 @@ the earth-moving distance}
 
 \item{q_thresh}{the threshold for q value by fdr control}
 
-\item{cores}{The number of cores used for parallization}
-
 \item{verbose}{if print the process information}
 
 \item{...}{other parameters for gene_GLRT.base}
+
+\item{cores}{The number of cores used for parallization}
 }
 \value{
 a dataframe of the test result. Each line is an exon with p-values

@@ -16,6 +16,7 @@ genesSitesPhi.base(
   phi_conf_thresh = 0.2,
   method = match.arg("beta", "psi"),
   CI_level = 0.05,
+  verbose = TRUE,
   ...
 )
 }
@@ -39,11 +40,9 @@ phi estimation}
 
 \item{CI_level}{The alpha for the confidence interval of phi estimation}
 
+\item{verbose}{The flag to indeicate if the intermediate messages should be printed}
+
 \item{...}{Other parameters for geneSitesPsi.base}
-
-\item{cores}{The number of cores for parallization}
-
-\item{mode}{The mode of parallization}
 }
 \value{
 a dataframe recording the phi estimation

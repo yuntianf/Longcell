@@ -4,7 +4,7 @@
 \alias{getMetaSites}
 \title{getMetaSites}
 \usage{
-getMetaSites(spliceOb, gene, cells = "all")
+getMetaSites(spliceOb, gene, cells = "all", verbose = TRUE)
 }
 \arguments{
 \item{spliceOb}{the Splice object}
@@ -12,6 +12,8 @@ getMetaSites(spliceOb, gene, cells = "all")
 \item{gene}{name of the target gene}
 
 \item{cells}{cells to use in building exon count table}
+
+\item{verbose}{The flag to indicate if output message}
 }
 \value{
 a metaSite object
