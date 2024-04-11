@@ -233,27 +233,8 @@ genesSitesPhi.base <- function(spliceOb,genes,
                                  psi_lwr = 0.1, psi_upr = 0.9,
                                  phi_conf_thresh = 0.2,
                                  method = match.arg("beta","psi"),
-                                 CI_level = 0.05,
-                                 cores = 4,
-                                 mode = c("sequential","multisession","multicore"),...){
-  core_avai = parallel::detectCores()
-  cores = ifelse(cores > core_avai,core_avai,cores)
-
-  #   mode = match.arg(mode,c("sequential","multisession","multicore"))
-
-  #   if(cores > 1 & mode == "sequential"){
-  #     warning("Set more than one core to use, will use multisession mode instead!")
-  #     mode = "multisession"
-  #   }
-  #   if(mode == "sequential"){
-  #     plan(strategy = mode)
-  #   }
-  #   else{
-  #     cat("The job will be paralleled on ",cores," cores.\n")
-  #     plan(strategy = mode,workers = cores)
-  #   }
-
-  phi <- parallel::mclapply(genes,function(x){
+                                 CI_level = 0.05,...){
+  phi <- future_lapply(genes,function(x){
     error <- try({
       if(method == "psi"){
         temp = geneSitesPhi_from_psi(spliceOb,x,
@@ -275,10 +256,10 @@ genesSitesPhi.base <- function(spliceOb,genes,
       return(temp)
     })
     if(class(error) == "try-error"){
-      print(x)
+      cat("The phi estimation failed for the gene ",x,"!\n")
       return(NULL)
     }
-  },mc.cores = getOption("mc.cores", cores))
+  },future.seed = TRUE,future.packages = c("Longcell"))
   phi <- as.data.frame(do.call(rbind,phi))
   phi = na.omit(phi)
 
@@ -307,7 +288,7 @@ setGeneric("genesSitesPhi",
 setMethod("genesSitesPhi",
           signature(object = "Splice",genes = "character"),
           function(object,genes,...){
-            genesSitesPhi.base.base(object,genes = genes,...)
+            genesSitesPhi.base(object,genes = genes,...)
           }
 )
 
@@ -331,7 +312,7 @@ setGeneric("HighExprsGene",
 setMethod("HighExprsGene",
           signature(object = "Splice",thresh = "numeric"),
           function(object,thresh = 100){
-            exprs = object@gene %>% filter(count > thresh)
+            exprs = object@genes %>% filter(count > thresh)
             return(exprs$gene)
           }
 )

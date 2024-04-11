@@ -468,19 +468,21 @@ geneSiteTable_df = function(data,strand,eps = 0.05, cell_col = "cell", iso_col =
 #' @param eps The threshold for two sites to be merged
 #' @param bed_gene_col The name of the column to record the gene name in the gene bed
 #' @param bed_strand_col The name of the column to record the gene strand in the gene bed
+#' @param overwrite The flag to decide if overwrite the computed metaSite object
 #' @param verbose The flag to indicate if print the information
 #' @return A Splice object with meta sites stored the in the meta_sites slot.
 #' @export
 geneSiteTable.base = function(spliceOb,gene_bed,genes= "all",eps = 0.05,
                               bed_gene_col = "gene",bed_strand_col = "strand",
+                              overwrite = FALSE,
                               verbose = TRUE){
   if(genes[1] == "all"){
-    genes = spliceOb@genes
+    genes = spliceOb@genes$gene
   }
-  diff = setdiff(genes,spliceOb@genes)
+  diff = setdiff(genes,spliceOb@genes$gene)
   if(length(diff) > 0){
     warning(paste(head(diff,10),collapse = ","),"... don't exsit in the splice object, will be ignored!")
-    genes = genes[genes %in% spliceOb@genes]
+    genes = genes[genes %in% spliceOb@genes$gene]
   }
 
   sub_bed = unique(gene_bed %>%
@@ -495,18 +497,24 @@ geneSiteTable.base = function(spliceOb,gene_bed,genes= "all",eps = 0.05,
     if(verbose){
       print(gene_i)
     }
+    cache = getMetaSites(spliceOb,gene_i)
+    if(!is.null(cache) & !overwrite){
+      return(cache)
+    }
     strand_i = sub_bed[i,bed_strand_col]
     sub_data = as.data.frame(data %>% filter(gene == gene_i))
     gene_i_site_table = geneSiteTable_df(sub_data,strand_i,eps = eps)
     if(is.null(gene_i_site_table)){
       return(NULL)
     }
+    #return(gene_i_site_table)
     meta_site_ob = new("metaSite",
                        sites = gene_i_site_table[[3]],
                        cellGeneCount = gene_i_site_table[[1]],
                        cellSiteCount = gene_i_site_table[[2]])
     return(meta_site_ob)
-  },future.seed=TRUE)
+  },future.seed=TRUE, future.globals=TRUE,future.packages = c("Longcell"))
+
   names(temp) = sub_bed[,bed_gene_col]
   temp<-temp[!sapply(temp,is.null)]
   spliceOb@meta_sites = temp

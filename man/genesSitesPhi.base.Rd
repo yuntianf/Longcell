@@ -16,8 +16,6 @@ genesSitesPhi.base(
   phi_conf_thresh = 0.2,
   method = match.arg("beta", "psi"),
   CI_level = 0.05,
-  cores = 4,
-  mode = c("sequential", "multisession", "multicore"),
   ...
 )
 }
@@ -41,11 +39,11 @@ phi estimation}
 
 \item{CI_level}{The alpha for the confidence interval of phi estimation}
 
+\item{...}{Other parameters for geneSitesPsi.base}
+
 \item{cores}{The number of cores for parallization}
 
 \item{mode}{The mode of parallization}
-
-\item{...}{Other parameters for geneSitesPsi.base}
 }
 \value{
 a dataframe recording the phi estimation

@@ -11,6 +11,7 @@ geneSiteTable.base(
   eps = 0.05,
   bed_gene_col = "gene",
   bed_strand_col = "strand",
+  overwrite = FALSE,
   verbose = TRUE
 )
 }
@@ -26,6 +27,8 @@ geneSiteTable.base(
 \item{bed_gene_col}{The name of the column to record the gene name in the gene bed}
 
 \item{bed_strand_col}{The name of the column to record the gene strand in the gene bed}
+
+\item{overwrite}{The flag to decide if overwrite the computed metaSite object}
 
 \item{verbose}{The flag to indicate if print the information}
 }

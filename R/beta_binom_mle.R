@@ -41,6 +41,7 @@ mle_module = function(exon_count,gene_count,start = NULL){
 #' @inheritParams mle_module
 #' @return a list of result for mle
 #' @importFrom bbmle mle2 summary
+#' @export
 mle_bb <- function(exon_count,gene_count,start = NULL){
   H = mle_module(exon_count,gene_count,start)
   if(!is.null(H)){

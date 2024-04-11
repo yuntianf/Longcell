@@ -183,8 +183,8 @@ getMetaSites = function(spliceOb,gene,cells = "all"){
     cells = cells[cells %in% rownames(meta_sites@cellGeneCount)]
   }
 
-  meta_sites@cellGeneCount = meta_sites@cellGeneCount[cells,]
-  meta_sites@cellSiteCount = meta_sites@cellSiteCount[cells,]
+  meta_sites@cellGeneCount = meta_sites@cellGeneCount[cells,,drop=FALSE]
+  meta_sites@cellSiteCount = meta_sites@cellSiteCount[cells,,drop=FALSE]
 
   return(meta_sites)
 }
@@ -201,18 +201,18 @@ getIsoform.base <- function(spliceob,genes, cells = "all"){
   isoforms = spliceob@count
 
   if(cells[1] == "all"){
-    cell_id = 1:length(spliceob@cells)
+    cell_id = 1:nrow(spliceob@cells)
   }
   else{
-    cell_id = which(spliceob@cells %in% cells)
+    cell_id = which(spliceob@cells$cell %in% cells)
   }
-  gene_id = which(spliceob@genes %in% genes)
+  gene_id = which(spliceob@genes$gene %in% genes)
 
   select_iso = isoforms[isoforms$gene %in% gene_id &
                           isoforms$cell %in% cell_id,]
 
-  select_iso$gene = spliceob@genes[select_iso$gene]
-  select_iso$cell = spliceob@cells[select_iso$cell]
+  select_iso$gene = spliceob@genes$gene[select_iso$gene]
+  select_iso$cell = spliceob@cells$cell[select_iso$cell]
   select_iso$isoform = spliceob@isoforms[select_iso$isoform]
 
   return(select_iso)
