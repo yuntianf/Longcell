@@ -371,6 +371,7 @@ sashimi_plot <- function(coverage,junction,filter_ratio = 20,
 #' @param cells The target cell population
 #' @param ... Omitted parameters for aesthetic  parameters in sashimi_plot
 #' @return a ggplot object.
+#' @export
 sashimi <- function(spliceOb,gene,cells,...){
   data = getIsoform(spliceOb,gene,cells)
 
