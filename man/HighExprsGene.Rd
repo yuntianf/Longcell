@@ -7,7 +7,7 @@
 HighExprsGene(object, thresh, ...)
 }
 \arguments{
-\item{object}{the Seurat object}
+\item{object}{the Splice object}
 
 \item{thresh}{the threshold for minimum total gene expression}
 

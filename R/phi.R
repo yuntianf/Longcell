@@ -314,7 +314,7 @@ setMethod("genesSitesPhi",
 
 
 #' @title generic HighExprsGene function definition
-#' @param object the Seurat object
+#' @param object the Splice object
 #' @param thresh the threshold for minimum total gene expression
 #' @param ... other possible parameters
 #' @export
@@ -326,13 +326,12 @@ setGeneric("HighExprsGene",
 #' @param object the Seurat object
 #' @param slot the slot name RNA expression assay in the Seurat object
 #' @param thresh the minimum total gene expression
-#' @import Seurat
-#' @importFrom Matrix rowSums
+#' @importFrom dplyr filter
 #' @export
 setMethod("HighExprsGene",
-          signature(object = "Seurat",thresh = "numeric"),
-          function(object,thresh = 100,slot = "RNA"){
-            exprs = Matrix::rowSums(object[[slot]])
-            return(names(exprs)[exprs > thresh])
+          signature(object = "Splice",thresh = "numeric"),
+          function(object,thresh = 100){
+            exprs = object@gene %>% filter(count > thresh)
+            return(exprs$gene)
           }
 )

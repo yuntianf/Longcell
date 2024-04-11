@@ -53,8 +53,8 @@ setMethod("show",
 #' @exportClass Splice
 #'
 setClass("Splice",
-         representation(cells = "vector",
-                        genes = "vector",
+         representation(cells = "data.frame",
+                        genes = "data.frame",
                         isoforms = "vector",
                         count = "data.frame",
                         meta_sites = "list"),
@@ -65,10 +65,10 @@ setClass("Splice",
 setMethod("show",
           signature(object="Splice"),
           function(object) {
-            cat("Splice object with ", length(object@cells),
-                " cells and ", length(object@genes), " genes\n")
-            cat("The top 10 cells are:", paste(head(object@cells,10),collapse = ","),"\n")
-            cat("The top 10 genes are:", paste(head(object@genes,10),collapse = ","),"\n")
+            cat("Splice object with ", nrow(object@cells),
+                " cells and ", nrow(object@genes), " genes\n")
+            cat("The top 10 cells are:", paste(head(object@cells$cell,10),collapse = ","),"\n")
+            cat("The top 10 genes are:", paste(head(object@genes$gene,10),collapse = ","),"\n")
           })
 
 #' @title createSplice
@@ -83,7 +83,6 @@ setMethod("show",
 #' @param gene_col The colname to for the gene id in the count file
 #' @param iso_col The colname to for the isoform id in the count file
 #' @importFrom utils read.table
-#' @export
 #'
 createSplice <- function(path,cell = "all", gene = "all",
                                cell_col = "cell",gene_col = "gene",iso_col = "exons"){
@@ -124,7 +123,7 @@ createSplice <- function(path,cell = "all", gene = "all",
 #'
 #' @param df The input dataframe.
 #' @inheritParams createSplice
-#' @importFrom dplyr mutate_at
+#' @importFrom dplyr mutate_at group_by summarise
 #' @importFrom magrittr %>%
 #' @return A Splice object
 #' @export
@@ -145,8 +144,8 @@ creatSplice_from_df <- function(df,cell = "all",gene = "all",
     df = df[df$gene %in% gene,]
   }
 
-  cells = names(table(df$cell))
-  genes = names(table(df$gene))
+  cells = df %>% group_by(cell) %>% summarise(nUMI = sum(count),nGene = length(unique(gene)))
+  genes = df %>% group_by(gene) %>% summarise(count = sum(count),nCell = length(unique(cell)))
   isoforms = names(table(df$isoform))
 
   df = df %>% mutate_at(c("cell","gene","isoform"),~as.numeric(as.factor(.)))
