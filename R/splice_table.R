@@ -545,8 +545,8 @@ setGeneric("geneSiteTable",
 #' @export
 setMethod("geneSiteTable",
           signature(object = "Splice",gene_bed = "list",genes = "character"),
-          function(object,gene_bed,genes = "all",eps = 0.05, ...){
+          function(object,gene_bed,genes = "all", ...){
             geneSiteTable.base(spliceOb = object,gene_bed = gene_bed,
-                               genes= genes,eps = eps,...)
+                               genes= genes,...)
           }
 )
