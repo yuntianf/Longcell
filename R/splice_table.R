@@ -497,10 +497,18 @@ geneSiteTable.base = function(spliceOb,gene_bed,genes= "all",eps = 0.05,
     if(verbose){
       print(gene_i)
     }
-    cache = getMetaSites(spliceOb,gene_i)
-    if(!is.null(cache) & !overwrite){
+
+    exist = TRUE
+    tryCatch({
+      cache = getMetaSites(spliceOb,gene_i)
+    },error = function(e) {
+      exist <<- FALSE
+    })
+
+    if(exist & !overwrite){
       return(cache)
     }
+
     strand_i = sub_bed[i,bed_strand_col]
     sub_data = as.data.frame(data %>% filter(gene == gene_i))
     gene_i_site_table = geneSiteTable_df(sub_data,strand_i,eps = eps)
@@ -536,7 +544,7 @@ setGeneric("geneSiteTable",
 #' @param ... parameters for geneSiteTable.base
 #' @export
 setMethod("geneSiteTable",
-          signature(object = "Splice",gene_bed = "list",genes = "character",eps = "numeric"),
+          signature(object = "Splice",gene_bed = "list",genes = "character"),
           function(object,gene_bed,genes = "all",eps = 0.05, ...){
             geneSiteTable.base(spliceOb = object,gene_bed = gene_bed,
                                genes= genes,eps = eps,...)
