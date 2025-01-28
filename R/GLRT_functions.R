@@ -37,6 +37,8 @@ GLRT <- function(exon_count1,gene_count1,exon_count2,gene_count2,
     chi = 2*(H0@min-H1_1@min-H1_2@min)
     p= pchisq(chi,2,lower.tail = F)
 
+    emd = beta_emd(H1_1@coef[1],H1_1@coef[2],H1_2@coef[1],H1_2@coef[2])
+
     #if(p <= p_thresh){
     #    dis = beta_dis(exon_count1,gene_count1,exon_count2,gene_count2,
     #                   iters = iters,psi_num = psi_num)
@@ -44,7 +46,7 @@ GLRT <- function(exon_count1,gene_count1,exon_count2,gene_count2,
     #else{
     #    dis = rep(NA,3)
     #}
-    return(c(p,H1_1@coef,H1_2@coef))
+    return(c(p,H1_1@coef,H1_2@coef,emd))
 }
 
 #' @title Generalized likelihood ratio test for a gene.
@@ -137,7 +139,7 @@ gene_GLRT.base <- function(spliceOb,gene,group1,group2,
 
   test = as.data.frame(do.call(rbind,test))
   if(length(test) > 0 && nrow(test) > 0){
-    colnames(test) = c("site","p","alpha1","beta1","alpha2","beta2")
+    colnames(test) = c("site","p","alpha1","beta1","alpha2","beta2","emd")
     #                   "dis_left","dis","dis_right")
     return(test)
   }
@@ -146,7 +148,7 @@ gene_GLRT.base <- function(spliceOb,gene,group1,group2,
 }
 
 #' @title generic gene_GLRT function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams gene_GLRT.base
 #' @param ... other possible parameters for gene_GLRT.base
 #' @export
@@ -172,41 +174,7 @@ setMethod("gene_GLRT",
           }
 )
 
-#' @title generic gene_GLRT function for Seurat object
-#' @description  an interface function to run GLRT for specified exons in a gene
-#' for specified two cell groups from a Seurat object.
-#' @param object the Seurat object
-#' @param group_col if group_col is NULL, group1 and group2 should be cell names in
-#' each group. If group_col is specified as a colname in Seurat cell meta data,
-#' group1 and group2 should be group names.
-#' @param group1 group name or cell name
-#' @param group2 group name or cell name
-#' @param slot the slot name to store Splice object in Seurat object
-#' @inheritParams gene_GLRT.base
-#' @import Seurat
-#' @return a dataframe of the test result. Each line is an exon with p-values
-#' and parameters for the psi distributions in two cell populations if they
-#' have significant difference
-#' @export
-setMethod("gene_GLRT",
-          signature(object = "Seurat",gene = "character",
-                    group1 = "character",group2 = "character"),
-          function(object,gene,group1,group2,
-                   slot = "splice",group_col = NULL,...){
-            spliceOb = getSplice(object,slot = slot)
-            if(is.null(group_col)){
-              warning("The group_col is not specified, you need to input cell name vectors for group1 and group2!")
-              gene_GLRT.base(spliceOb,gene,group1,group2,...)
-            }
-            else{
-              meta = object@meta.data
-              cell_group1 = rownames(meta[meta[,group_col] %in% group1,])
-              cell_group2 = rownames(meta[meta[,group_col] %in% group2,])
-              gene_GLRT.base(spliceOb,gene = gene,
-                             group1 = cell_group1,group2 = cell_group2,...)
-            }
-          }
-)
+
 
 #' @title calculate mean value for a beta distribution
 #' @description calculate mean value for a beta distribution
@@ -263,6 +231,14 @@ beta_dis <- function(exon_count1,gene_count1,exon_count2,gene_count2,
   paras_conf <- quantile(unlist(paras),c(0.025,0.975))
 
   return(c(paras_conf[1],mean(unlist(paras)),paras_conf[2]))
+}
+
+beta_emd = function(alpha1,beta1,alpha2,beta2){
+  cdf1 <- function(x) pbeta(x, shape1 = alpha1, shape2 = beta1)
+  cdf2 <- function(x) pbeta(x, shape1 = alpha2, shape2 = beta2)
+
+  emd <- integrate(function(x) abs(cdf1(x) - cdf2(x)), lower = 0, upper = 1)$value
+  return(emd)
 }
 
 #' @title Generalized likelihood ratio test for multiples gene.
@@ -353,7 +329,7 @@ genes_groups_GLRT.base <- function(spliceOb,genes,group1s,group2s,
 }
 
 #' @title generic genes_groups_GLRT function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams genes_groups_GLRT.base
 #' @param ... other possible parameters for genes_groups_GLRT.base
 #' @export
@@ -378,50 +354,76 @@ setMethod("genes_groups_GLRT",
           }
 )
 
-#' @title generic genes_groups_GLRT function for Seurat object
-#' @description  an interface function to run GLRT for all exons in multiple genes
-#' for multiple cell group pairs from a Splice object.
-#' @param object the Seurat object
-#' @param group_col if group_col is NULL, group1s and group2s should be cell names in
-#' each group. If group_col is specified as a colname in Seurat cell meta data,
-#' group1s and group2s should be group names.
-#' @param group1s group names or cell names
-#' @param group2s group names or cell names
-#' @param slot the slot name to store Splice object in Seurat object
-#' @inheritParams genes_groups_GLRT.base
-#' @param ... parameters for genes_groups_GLRT.base
+
+#' @title genes_multigroups_GLRT
+#' @description  Do the generalized likelihood ratio test for multiples gene across multiple cell groups.
+#' @param spliceOb the Splice object
+#' @param genes target genes to be tested
+#' @param meta a dataframe recording the meta data for each, should have at lease two columns,
+#' one indicate the cell barcode and the other one indicate the cell group information.
+#' @param cell_col,group_col The column names in the meta to record the cell/group info.
+#' @param filter A bool flag to indicate if insignificant results should be filtered out.
+#' @param q_thresh The threshold for the FDR controled q value.
+#' @param ... Other parameters used in gene_GLRT.base.
 #' @return a dataframe of the test result. Each line is an exon with p-values
 #' and parameters for the psi distributions in two cell populations if they
 #' have significant difference
 #' @export
-setMethod("genes_groups_GLRT",
-          signature(object = "Seurat",genes = "character",
-                    group1s = "character",group2s = "character"),
-          function(object,genes,group1s,group2s,
-                   group_col = NULL,slot = "splice",...){
-            spliceOb = getSplice(object,slot = slot)
-            if(is.null(group_col)){
-              warning("The group_col is not specified, you need to input cell name vectors for group1 and group2!")
-              out = genes_groups_GLRT.base(spliceOb = spliceOb,genes = genes,
-                                     group1s = group1s,group2s = group2s,...)
-            }
-            else{
-              meta = object@meta.data
-              cell_group1 = lapply(group1s,function(x){
-                rownames(meta[meta[,group_col] %in% x,])
-              })
-              names(cell_group1) = group1s
-              cell_group2 = lapply(group2s,function(x){
-                rownames(meta[meta[,group_col] %in% x,])
-              })
-              names(cell_group2) = group2s
-              out = genes_groups_GLRT.base(spliceOb,genes = genes,
-                                    group1s = cell_group1,group2s = cell_group2,...)
-            }
-            return(out)
-          }
-)
+genes_multigroups_GLRT = function(spliceOb,genes,meta,cell_col = "cell",group_col = "group",
+                                  filter = TRUE,q_thresh = 0.05,...){
+  group_uniq = unique(meta[,group_col])
 
+  results = lapply(group_uniq,function(x){
+    group1 = meta %>% filter_at(group_col,~.== x)
+    group2 = meta %>% filter_at(group_col,~.!= x)
+
+    sub = future_lapply(genes,function(i){
+      error <- try({
+        test = gene_GLRT.base(spliceOb,gene = i,
+                              group1 = unlist(group1[,cell_col]),
+                              group2 = unlist(group2[,cell_col]),...)
+      },silent = FALSE)
+      # print(error)
+      if(class(error) == "try-error"){
+        cat("Something wrong happened for GLRT of gene ",i,
+            " for group ",x,"!\n")
+        return(NULL)
+      }
+
+      if(length(test) >0 && nrow(test) >0){
+        test = cbind(i,test)
+      }
+      return(test)
+    },future.seed = TRUE,future.packages = c("Longcell"))
+
+    sub = as.data.frame(do.call(rbind,sub))
+
+    if(length(sub) >0 && nrow(sub) >0){
+      sub = cbind(x,sub)
+      colnames(sub)[1:2] = c("group","gene")
+    }
+
+    return(sub)
+  })
+
+  results = do.call(rbind,results)
+
+  if(length(results) >0 && nrow(results) > 0){
+    results <- results %>% mutate_at(vars(-all_of(c("gene","site","group"))),
+                                     as.numeric)
+    if(filter == TRUE){
+      results$q = p.adjust(p = results$p,method = "fdr",n = nrow(results))
+      results = results[results$q <= q_thresh,]
+
+      results$mean_diff <- beta_mean(results$alpha2,results$beta2) -
+        beta_mean(results$alpha1,results$beta1)
+      results$var_diff <- beta_var(results$alpha2,results$beta2) -
+        beta_var(results$alpha1,results$beta1)
+    }
+  }
+
+  return(results)
+}
 
 #' @title plot for GLRT significant results
 #' @description  plot the scatter plot for mean change versus variance change of exon psi

@@ -27,13 +27,13 @@ geneSitesPsi.base <- function(spliceOb,gene,
   row_filter = rowSums(is.na(cell_site_psi)) < ncol(cell_site_psi)
   col_filter = colnames(cell_site_psi)[colSums(is.na(cell_site_psi)) < nrow(cell_site_psi)]
 
-  cell_site_psi = cell_site_psi[row_filter,] %>% select_at(col_filter)
+  cell_site_psi = cell_site_psi[row_filter,,drop = FALSE] %>% dplyr::select_at(col_filter)
 
   return(cell_site_psi)
 }
 
 #' @title generic genes_exons_psi function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams  geneSitesPsi.base
 #' @param ... other possible parameters for geneSitesPsi.base
 #' @export
@@ -82,7 +82,7 @@ phi_from_beta <- function(alpha,beta){
 phi_conf_bootstrap <- function(x,iters = 100){
   conf <- sapply(1:iters,function(i){
     sample_x <- sample(x,length(x),replace = TRUE)
-    sample_phi <- phi(sample_x)
+    sample_phi <- phi_from_psi(sample_x)
     return(sample_phi)
   })
   out <- na.omit(conf)
@@ -138,7 +138,7 @@ geneSitesPhi_from_psi <- function(spliceOb,gene,cells = "all",
   else{
     sites_phi <- lapply(sites,function(i){
       psi = na.omit(unlist(cell_site_psi[,i]))
-      conf = phi_conf(psi,iters = iters)
+      conf = phi_conf_bootstrap(psi,iters = iters)
       return(c(i,mean(psi),conf,length(psi)))
     })
     sites_phi <- as.data.frame(do.call(rbind,sites_phi))
@@ -278,7 +278,7 @@ genesSitesPhi.base <- function(spliceOb,genes,
 }
 
 #' @title generic genesSitesPhi function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @param genes vector of names of the target gene
 #' @param ... other possible parameters
 #' @export
@@ -308,10 +308,9 @@ setMethod("genesSitesPhi",
 setGeneric("HighExprsGene",
            function(object,thresh,...) standardGeneric("HighExprsGene"))
 
-#' @title generic HighExprsGene function for Seurat object
+#' @title generic HighExprsGene function for Splice object
 #' @description choose genes with high total expression for phi calculation
-#' @param object the Seurat object
-#' @param slot the slot name RNA expression assay in the Seurat object
+#' @param object the Splice object
 #' @param thresh the minimum total gene expression
 #' @importFrom dplyr filter
 #' @export

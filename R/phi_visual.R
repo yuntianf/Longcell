@@ -123,7 +123,7 @@ psiHist.base <- function(spliceOb, gene, site, cells = "all",
 }
 
 #' @title generic psiHist function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams psiHist.base
 #' @param ... parameters for psiHist.base
 #' @export
@@ -144,6 +144,24 @@ setMethod("psiHist",
           }
 )
 
+psiCellPlotData = function(spliceOb,gene,sites,
+                           cells = "all",exprs_thresh = 10,...){
+  meta_sites = getMetaSites(splice, gene,cells)
+  cell_gene_count = meta_sites@cellGeneCount
+
+  psi = geneSitesPsi.base(spliceOb = spliceOb,gene = gene,
+                          cells = cells,exprs_thresh = exprs_thresh,...)
+
+  if(sum(colnames(psi) %in% sites) == 0){
+    stop("The selected sites don't exist, maybe be filtered out due to low expression!")
+  }
+
+  psi = psi[,colnames(psi) %in% sites,drop=FALSE]
+  cell_gene_count = cell_gene_count[rownames(psi),colnames(psi) %in% sites,drop = FALSE]
+
+  return(list(gene = cell_gene_count,psi = psi))
+}
+
 
 #' @title psiCellPlot
 #' @description plot psi value in cell embeddings
@@ -162,32 +180,33 @@ setMethod("psiHist",
 #' @export
 psiCellPlot = function(spliceOb,gene,sites,cell_embedding,dims = c(1,2),
                             cells = "all",exprs_thresh = 10,...){
+  count = psiCellPlotData(spliceOb,gene,sites,cells,exprs_thresh,...)
+
+  gene_count = count[[1]]
+  psi = count[[2]]
+
   cell_embedding = as.data.frame(cell_embedding)
   dims = colnames(cell_embedding)[dims]
-
-  psi = geneSitesPsi.base(spliceOb = spliceOb,gene = gene,
-                          cells = cells,exprs_thresh = exprs_thresh,...)
-
-  if(sum(colnames(psi) %in% sites) == 0){
-    stop("The selected sites don't exist, maybe be filtered out due to low expression!")
-  }
-
-  psi = psi[,colnames(psi) %in% sites,drop=FALSE]
-
-  cell_embedding = cbind(cell_embedding,psi[rownames(cell_embedding),,drop=FALSE])
   #return(cell_embedding)
 
   out_plot = lapply(colnames(psi),function(x){
+    cell_embedding = cbind(cell_embedding,
+                           gene_count[rownames(cell_embedding),x,drop=FALSE],
+                           psi[rownames(cell_embedding),x,drop=FALSE])
+    colnames(cell_embedding)[3:4] = c("gene","psi")
+
     out = ggplot()+
       geom_point(data = cell_embedding,
                  aes_string(x = dims[1],y = dims[2]),
                  color = "grey",alpha = 1,size = 1)+
       geom_point(data = na.omit(cell_embedding),
-                 aes_string(x = dims[1],y = dims[2],color = x),
-                 alpha = 1,size = 2)+
+                 aes_string(x = dims[1],y = dims[2],fill = "psi",size = "gene"),
+                 alpha = 0.75,shape = 21,color = "black")+
       #scale_color_gradient2(low = "steelblue",high = "coral",
       #                      mid = "whitesmoke",midpoint = median(psi[,x],na.rm = TRUE))+
-      scale_color_viridis_c(name = TeX("$\\psi$"))+
+      scale_fill_distiller(palette = "Spectral",direction = -1,name = TeX("$\\psi$"))+
+      scale_size(range = c(2, 5))+
+      # scale_color_viridis_c(name = TeX("$\\psi$"))+
       theme_classic()+
       xlab(dims[1])+ylab(dims[2])+
       theme(text = element_text(size = 15))
@@ -337,7 +356,7 @@ sashimi_plot <- function(coverage,junction,filter_ratio = 20,
   junction$start = as.numeric(junction$start)
   junction$end = as.numeric(junction$end)
 
-  filter = max(coverage$coverage)/filter_ratio
+  filter = max(coverage$coverage)*filter_ratio/100
   junction_filter = junction[junction$count > filter &
                                junction$y_start > filter &
                                junction$y_end > filter,]
@@ -346,7 +365,9 @@ sashimi_plot <- function(coverage,junction,filter_ratio = 20,
     region = "chr"
   }
   if(is.null(color_set)){
-    color_set = list(c("steelblue","LightSkyBlue"),c("coral","LightSalmon"))
+    color_set = list(c("MediumSeaGreen","PaleGreen"),
+                     c("steelblue","LightSkyBlue"),c("coral","LightSalmon"),
+                     c("MediumSlateBlue","Thistle"),c("DimGrey","LightGray"))
   }
 
   sashimi = ggplot()+

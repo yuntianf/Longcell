@@ -10,7 +10,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.6.0)
 LazyData: true
-Imports: methods, stats, utils, Seurat, dplyr, Matrix, tidyr, transport, extraDistr, ggplot2, latex2exp, bbmle
+Imports: RColorBrewer, stats, utils, dplyr, Matrix, tidyr, transport, extraDistr, ggplot2, latex2exp, bbmle, dbscan, future, future.apply, geomtextpath, ggrepel, parallel
 Suggests:
     knitr,
     rmarkdown

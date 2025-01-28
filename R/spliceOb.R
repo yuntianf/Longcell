@@ -220,7 +220,7 @@ getIsoform.base <- function(spliceob,genes, cells = "all"){
 }
 
 #' @title generic getIsoform function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams getIsoform.base
 #' @param ... other possible parameters for getIsoform.base
 #' @export
@@ -243,3 +243,24 @@ setMethod("getIsoform",
           }
 )
 
+
+metasite_retrieve = function(splice_ob,genes,sites){
+  if(length(genes) != length(sites)){
+    stop("The length of genes and sites should correspond!")
+  }
+  n = length(genes)
+
+  out = sapply(1:n,function(i){
+    gene_i = genes[i]
+    sites_i = sites[i]
+    print(gene_i)
+
+    site_i_id = as.numeric(gsub("metasite_","",sites_i))
+
+    meta = getMetaSites(splice_ob,gene_i)
+    result = meta@sites[[site_i_id]]
+    result = paste(result,collapse = ",")
+    return(result)
+  })
+  return(out)
+}

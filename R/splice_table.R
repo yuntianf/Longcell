@@ -531,7 +531,7 @@ geneSiteTable.base = function(spliceOb,gene_bed,genes= "all",eps = 0.05,
 
 
 #' @title generic geneSiteTable function definition
-#' @param object the Splice or Seurat object
+#' @param object the Splice object
 #' @inheritParams geneSiteTable.base
 #' @param ... other possible parameters for genes_groups_GLRT.base
 #' @export
