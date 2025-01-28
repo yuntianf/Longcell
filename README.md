@@ -12,7 +12,7 @@ The easiest way to get Longcell is to install it from Github:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("yuntianf/Longcell")
+devtools::install_github("yuntianf/Longcell",dependencies=TRUE)
 ```
 
 ## Instruction
