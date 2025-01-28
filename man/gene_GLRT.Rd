@@ -7,7 +7,7 @@
 gene_GLRT(object, gene, group1, group2, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{gene}{the name of specified gene}
 

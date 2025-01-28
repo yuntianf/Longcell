@@ -7,7 +7,7 @@
 genesSitesPhi(object, genes, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{genes}{vector of names of the target gene}
 

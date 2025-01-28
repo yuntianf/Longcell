@@ -7,7 +7,7 @@
 genes_groups_GLRT(object, genes, group1s, group2s, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{genes}{a vector of gene names to do GLRT}
 

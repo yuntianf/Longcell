@@ -7,7 +7,7 @@
 geneSitesPsi(object, gene, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{gene}{name of the target gene}
 

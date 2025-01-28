@@ -2,16 +2,14 @@
 % Please edit documentation in R/phi.R
 \name{HighExprsGene,Splice,numeric-method}
 \alias{HighExprsGene,Splice,numeric-method}
-\title{generic HighExprsGene function for Seurat object}
+\title{generic HighExprsGene function for Splice object}
 \usage{
 \S4method{HighExprsGene}{Splice,numeric}(object, thresh = 100)
 }
 \arguments{
-\item{object}{the Seurat object}
+\item{object}{the Splice object}
 
 \item{thresh}{the minimum total gene expression}
-
-\item{slot}{the slot name RNA expression assay in the Seurat object}
 }
 \description{
 choose genes with high total expression for phi calculation

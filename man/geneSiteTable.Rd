@@ -7,7 +7,7 @@
 geneSiteTable(object, gene_bed, genes, eps, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{gene_bed}{The gene bed annotation, should include the gene name and the gene strand.}
 

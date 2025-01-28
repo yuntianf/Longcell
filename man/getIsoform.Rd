@@ -7,7 +7,7 @@
 getIsoform(object, genes, ...)
 }
 \arguments{
-\item{object}{the Splice or Seurat object}
+\item{object}{the Splice object}
 
 \item{genes}{A vector of genes to extract isoforms}
 
