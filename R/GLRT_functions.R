@@ -464,7 +464,7 @@ GLRT_sig_plot = function(data,gene_col = "gene",color_col = NULL,
   out = out+
     ggrepel::geom_text_repel(data = data %>% filter(abs(mean_diff) > mean_diff_thresh|abs(var_diff) > var_diff_thresh,
                                                     log_q > log_q_thresh),
-                             aes(label = !!sym(annot_col)),color = "black")+
+                             aes(label = !!sym(gene_col)),color = "black")+
     theme_classic()+
     xlab(TeX("mean change of $\\psi$"))+
     ylab(TeX("var change of $\\psi$"))+

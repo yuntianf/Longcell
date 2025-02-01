@@ -23,3 +23,4 @@ Collate:
     'phi.R'
     'phi_visual.R'
 VignetteBuilder: knitr
+URL: https://yuntianf.github.io/Longcell/
