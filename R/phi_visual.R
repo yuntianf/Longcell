@@ -144,9 +144,18 @@ setMethod("psiHist",
           }
 )
 
+#' @title psiCellPlotData
+#' @description Prepare the plot data for psiCellPlot
+#' @param spliceOb a Splice object
+#' @param gene the name of specified gene
+#' @param sites the selected exon to be plot
+#' @param cells the cells to be included in the psi plot
+#' @param exprs_thresh the minimum gene expression required for psi calculation
+#' @param ... parameters for geneSitesPsi.base to calculate psi value
+#' @return a list including the gene count and the psi for the target splicing site to be plotted
 psiCellPlotData = function(spliceOb,gene,sites,
                            cells = "all",exprs_thresh = 10,...){
-  meta_sites = getMetaSites(splice, gene,cells)
+  meta_sites = getMetaSites(spliceOb, gene,cells)
   cell_gene_count = meta_sites@cellGeneCount
 
   psi = geneSitesPsi.base(spliceOb = spliceOb,gene = gene,

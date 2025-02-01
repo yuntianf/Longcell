@@ -435,34 +435,49 @@ genes_multigroups_GLRT = function(spliceOb,genes,meta,cell_col = "cell",group_co
 #' @param var_diff The name of column in the data which stores the variance difference
 #' of the psi distributions
 #' @param q The name of column in the data which stores the q value
-#' @param q_thresh the minimum of q to show the gene name in the scatter plot
-#' @param q_mid The scatter plot is colored by q value, q_mid is set for the middle color point
-#' @param pt.size The point size in the scatter
-#' @param text.size The size of the gene name annotation on the point
-#' @param low,mid,high The color to indicate the q value
+#' @param mean_diff_thresh the minimum of mean difference of psi to show the gene name in the scatter plot
+#' @param var_diff_thresh the minimum of variance difference of psi to show the gene name in the scatter plot
+#' @param q_thresh the minimum of -log(q,10) to show the gene name in the scatter plot
 #' @import ggplot2
 #' @importFrom latex2exp TeX
 #' @importFrom ggrepel geom_text_repel
 #' @return a ggplot object
 #' @export
-GLRT_sig_plot = function(data,gene_col = "gene",
+GLRT_sig_plot = function(data,gene_col = "gene",color_col = NULL,
                          mean_diff = "mean_diff",var_diff = "var_diff",q = "q",
-                         q_thresh = 3,q_mid = NULL,pt.size = 2,text.size = 3,
-                         low = "steelblue",mid = "whitesmoke",high = "tomato"){
+                         mean_diff_thresh = 0.15,var_diff_thresh = 0.1,log_q_thresh = 3){
+  data = as.data.frame(data)
   data$log_q = -log(data[,q],10)
-  if(is.null(q_mid)){
-    q_mid = (max(data$log_q)+min(data$log_q))/2
+
+  out = ggplot(mapping = aes(x = !!sym(mean_diff),y = !!sym(var_diff)))
+
+  if(is.null(color_col)){
+    out = out+geom_point(data = data,aes(size = log_q),color = "grey",alpha = 0.75)
+    color_row = 0
+  }
+  else{
+    out = out+geom_point(data = data,aes(color = !!sym(color_col),size = log_q),alpha = 0.75)
+    color_row = length(unique(data[,color_col]))
   }
 
-  out = ggplot()+
-    geom_point(data = data,aes_string(x = mean_diff,y=var_diff,color ="log_q"),size = pt.size)+
-    #scale_color_gradient2(low = low,mid = mid,high = high,midpoint = q_mid)+
-    scale_color_gradientn(name = "-log(q)",colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu")))+
-    ggrepel::geom_text_repel(data = data[data$log_q > q_thresh,],
-              aes_string(x = mean_diff,y = var_diff,label = gene_col),size =text.size)+
-    xlab(latex2exp::TeX("mean change of $\\psi$"))+ylab(latex2exp::TeX("var change of $\\psi$"))+
+
+  out = out+
+    ggrepel::geom_text_repel(data = data %>% filter(abs(mean_diff) > mean_diff_thresh|abs(var_diff) > var_diff_thresh,
+                                                    log_q > log_q_thresh),
+                             aes(label = !!sym(annot_col)),color = "black")+
     theme_classic()+
-    theme(text = element_text(size = 15))
+    xlab(TeX("mean change of $\\psi$"))+
+    ylab(TeX("var change of $\\psi$"))+
+    theme(text = element_text(size = 15))+
+    theme(
+      legend.position = "top",           # Move all legends to the top initially
+      legend.box = "horizontal"          # Arrange legends horizontally
+    ) +
+    guides(
+      color = guide_legend(order = 1,nrow = color_row,override.aes = list(size = 5)),   # Set color legend order to be first
+      size = guide_legend(order = 2,nrow = 4)    # Set size legend order to be second
+    )
+
 
   return(out)
 }

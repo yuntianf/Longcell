@@ -7,16 +7,13 @@
 GLRT_sig_plot(
   data,
   gene_col = "gene",
+  color_col = NULL,
   mean_diff = "mean_diff",
   var_diff = "var_diff",
   q = "q",
-  q_thresh = 3,
-  q_mid = NULL,
-  pt.size = 2,
-  text.size = 3,
-  low = "steelblue",
-  mid = "whitesmoke",
-  high = "tomato"
+  mean_diff_thresh = 0.15,
+  var_diff_thresh = 0.1,
+  log_q_thresh = 3
 )
 }
 \arguments{
@@ -32,15 +29,11 @@ of the psi distributions}
 
 \item{q}{The name of column in the data which stores the q value}
 
-\item{q_thresh}{the minimum of q to show the gene name in the scatter plot}
+\item{mean_diff_thresh}{the minimum of mean difference of psi to show the gene name in the scatter plot}
 
-\item{q_mid}{The scatter plot is colored by q value, q_mid is set for the middle color point}
+\item{var_diff_thresh}{the minimum of variance difference of psi to show the gene name in the scatter plot}
 
-\item{pt.size}{The point size in the scatter}
-
-\item{text.size}{The size of the gene name annotation on the point}
-
-\item{low, mid, high}{The color to indicate the q value}
+\item{q_thresh}{the minimum of -log(q,10) to show the gene name in the scatter plot}
 }
 \value{
 a ggplot object
