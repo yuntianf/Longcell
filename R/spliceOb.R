@@ -243,7 +243,12 @@ setMethod("getIsoform",
           }
 )
 
-
+#' @title metasite_retrieve
+#' @description  recover the metasites to the corresponding original sites for multiple genes
+#' @param spliceob A Splice object
+#' @param genes A vector of genes to extract isoforms
+#' @param sites A vector of meta splicing sites, usually has format as "metasite_id"
+#' @return A vector of string, each element is the pasted splicing sites for a meta site.
 metasite_retrieve = function(splice_ob,genes,sites){
   if(length(genes) != length(sites)){
     stop("The length of genes and sites should correspond!")
