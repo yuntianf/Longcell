@@ -18,7 +18,7 @@ devtools::install_github("yuntianf/Longcell",dependencies=TRUE)
 ## Instruction
 To view the documetation and tutorial of Longcell, you could visit:
 
-https://github.com/yuntianf/Longcell/blob/main/vignettes/Longcell.ipynb
+https://yuntianf.github.io/Longcell/
 
 ## Citation
 
