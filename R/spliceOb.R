@@ -55,7 +55,7 @@ setMethod("show",
 setClass("Splice",
          representation(cells = "data.frame",
                         genes = "data.frame",
-                        isoforms = "vector",
+                        isoforms = "character",
                         count = "data.frame",
                         meta_sites = "list"),
          prototype(cells = NULL, genes = NULL,
@@ -67,8 +67,8 @@ setMethod("show",
           function(object) {
             cat("Splice object with ", nrow(object@cells),
                 " cells and ", nrow(object@genes), " genes\n")
-            cat("The top 10 cells are:", paste(head(object@cells$cell,10),collapse = ","),"\n")
-            cat("The top 10 genes are:", paste(head(object@genes$gene,10),collapse = ","),"\n")
+            cat("The top 10 cells are:", paste(head(object@cells, 10)$cell, collapse = ","), "\n")
+            cat("The top 10 genes are:", paste(head(object@genes, 10)$gene, collapse = ","), "\n")
           })
 
 #' @title createSplice
@@ -201,19 +201,34 @@ getMetaSites = function(spliceOb,gene,cells = "all",verbose = TRUE){
 getIsoform.base <- function(spliceob,genes, cells = "all"){
   isoforms = spliceob@count
 
-  if(cells[1] == "all"){
-    cell_id = 1:nrow(spliceob@cells)
+  if(class(spliceob@cells) == "character"){
+    cells_pool = spliceob@cells
   }
   else{
-    cell_id = which(spliceob@cells$cell %in% cells)
+    cells_pool = spliceob@cells$cell
   }
-  gene_id = which(spliceob@genes$gene %in% genes)
+
+  if(class(spliceob@genes) == "character"){
+    genes_pool = spliceob@genes
+  }
+  else{
+    genes_pool = spliceob@genes$gene
+  }
+
+  if(cells[1] == "all"){
+    cell_id = 1:length(cells_pool)
+  }
+  else{
+    cell_id = which(cells_pool %in% cells)
+  }
+
+  gene_id = which(genes_pool %in% genes)
 
   select_iso = isoforms[isoforms$gene %in% gene_id &
                           isoforms$cell %in% cell_id,]
 
-  select_iso$gene = spliceob@genes$gene[select_iso$gene]
-  select_iso$cell = spliceob@cells$cell[select_iso$cell]
+  select_iso$gene = genes_pool[select_iso$gene]
+  select_iso$cell = cells_pool[select_iso$cell]
   select_iso$isoform = spliceob@isoforms[select_iso$isoform]
 
   return(select_iso)

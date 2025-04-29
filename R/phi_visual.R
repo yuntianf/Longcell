@@ -199,14 +199,14 @@ psiCellPlot = function(spliceOb,gene,sites,cell_embedding,dims = c(1,2),
   #return(cell_embedding)
 
   out_plot = lapply(colnames(psi),function(x){
-    cell_embedding = cbind(cell_embedding,
+    cell_embedding = cbind(cell_embedding[,dims],
                            gene_count[rownames(cell_embedding),x,drop=FALSE],
                            psi[rownames(cell_embedding),x,drop=FALSE])
     colnames(cell_embedding)[3:4] = c("gene","psi")
 
     out = ggplot()+
       geom_point(data = cell_embedding,
-                 aes_string(x = dims[1],y = dims[2]),
+                 aes(x = !!sym(dims[1]),y = !!sym(dims[2])),
                  color = "grey",alpha = 1,size = 1)+
       geom_point(data = na.omit(cell_embedding),
                  aes_string(x = dims[1],y = dims[2],fill = "psi",size = "gene"),

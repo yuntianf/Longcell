@@ -5,7 +5,7 @@ Version: 1.0.0
 Author: Yuntian Fu
 Maintainer: Yuntian Fu <yuntianf@pennmedicine.upenn.edu>
 Description: Longcell can help identify highly variable exons whinin a single cell population, and do differential alternative splicing analysis across two cell populations.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a license
+License: MIT
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 3.6.0)
