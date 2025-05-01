@@ -282,6 +282,7 @@ junction_count <- function(isoform,count = 1,polyA = 0,
 #' @description transform the isoform count data to the format for sahimi plot
 #' @inheritParams junction_count
 #' @return A list recording the base count and the junction count.
+#' @export
 sashimi_plot_data <- function(isoforms,counts,polyA = NULL,
                               sep = ",",split = "|"){
   if(length(isoforms) != length(counts)){
@@ -354,6 +355,7 @@ range_scale = function(data,lwr = 1,upr = 5){
 #' @import ggplot2
 #' @importFrom geomtextpath geom_textcurve
 #' @return a ggplot object.
+#' @export
 sashimi_plot <- function(coverage,junction,filter_ratio = 20,
                          color_id = 1,region = NULL,lwr = 1,upr = 5,
                          color_set = NULL){

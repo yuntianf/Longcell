@@ -65,10 +65,24 @@ setClass("Splice",
 setMethod("show",
           signature(object="Splice"),
           function(object) {
-            cat("Splice object with ", nrow(object@cells),
-                " cells and ", nrow(object@genes), " genes\n")
-            cat("The top 10 cells are:", paste(head(object@cells, 10)$cell, collapse = ","), "\n")
-            cat("The top 10 genes are:", paste(head(object@genes, 10)$gene, collapse = ","), "\n")
+            if("character" %in% class(object@cells)){
+              cell_pool = object@cells
+            }
+            else{
+              cell_pool = object@cells$cell
+            }
+
+            if("character" %in% class(object@genes)){
+              gene_pool = object@genes
+            }
+            else{
+              gene_pool = object@genes$gene
+            }
+
+            cat("Splice object with ", length(cell_pool),
+                " cells and ", length(gene_pool), " genes\n")
+            cat("The top 10 cells are:", paste(head(cell_pool, 10), collapse = ","), "\n")
+            cat("The top 10 genes are:", paste(head(gene_pool, 10), collapse = ","), "\n")
           })
 
 #' @title createSplice
@@ -201,14 +215,14 @@ getMetaSites = function(spliceOb,gene,cells = "all",verbose = TRUE){
 getIsoform.base <- function(spliceob,genes, cells = "all"){
   isoforms = spliceob@count
 
-  if(class(spliceob@cells) == "character"){
+  if("character" %in% class(spliceob@cells)){
     cells_pool = spliceob@cells
   }
   else{
     cells_pool = spliceob@cells$cell
   }
 
-  if(class(spliceob@genes) == "character"){
+  if("character" %in% class(spliceob@genes)){
     genes_pool = spliceob@genes
   }
   else{
