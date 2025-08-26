@@ -25,8 +25,6 @@ https://yuntianf.github.io/Longcell/
 If you use Longcell for published work, please cite our manuscript:
 
 ``` r
-Single cell and spatial alternative splicing analysis with long read sequencing
-Yuntian Fu, Heonseok Kim, Jenea I. Adams, Susan M. Grimes, Sijia Huang, Billy T. Lau, Anuja Sathe, Paul Hess, Hanlee P. Ji, Nancy R. Zhang
-bioRxiv 2023.02.23.529769; doi: https://doi.org/10.1101/2023.02.23.529769
+Fu Y, Kim H, Roy S, et al. Single cell and spatial alternative splicing analysis with Nanopore long read sequencing[J]. Nature Communications, 2025, 16(1): 6654.
 ```
 
