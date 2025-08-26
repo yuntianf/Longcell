@@ -253,6 +253,7 @@ metaSpliceSite = function(sites_table,count,eps = 0.05){
 #' @param data A dataframe recording the isoform for a gene
 #' @param strand The strand of the target gene
 #' @param eps The threshold for two sites to be merged
+#' @param endthresh The splicing sites near the end of reads are usually noisy, this threshold is to exclude sites within the range around the end points.
 #' @param cell_col The name of the column recording the cell barcode
 #' @param iso_col The name of the column recording the isoform string
 #' @param count_col The name of the column recording the isoform count in each cell
@@ -263,7 +264,7 @@ metaSpliceSite = function(sites_table,count,eps = 0.05){
 #' @importFrom dplyr summarise
 #' @importFrom dplyr filter
 #' @return A metaSite object for a gene
-spliceTable = function(data,strand,eps = 0.05, cell_col = "cell", iso_col = "isoform",
+spliceTable = function(data,strand,eps = 0.05,endthresh = 5, cell_col = "cell", iso_col = "isoform",
                        count_col = "count",polyA_col = "polyA", split = "|",sep = ","){
   iso_uniq = unique(data[,iso_col])
 
@@ -272,9 +273,20 @@ spliceTable = function(data,strand,eps = 0.05, cell_col = "cell", iso_col = "iso
     len = length(sites)
     start = sites[1]
     end = sites[len]
+
     if(len >= 4){
       in_sites = sites[seq(3,(len-1),2)]
       out_sites = sites[seq(2,(len-2),2)]
+
+      in_sites = in_sites[in_sites >= (start+endthresh)]
+      out_sites = out_sites[out_sites <= (end-endthresh)]
+
+      if(length(in_sites) == 0){
+        in_sites = NA
+      }
+      if(length(out_sites) == 0){
+        out_sites = NA
+      }
     }
     else{
       in_sites = NA
@@ -447,9 +459,9 @@ cellGeneSiteCount <- function(splice_site_table,cell_col = "cell",count_col = "c
 #' @return A list including two dataframes, the fisrt one records the gene count for each site in each cell,
 #' while the second one record the spliced-in site count.
 #' @export
-geneSiteTable_df = function(data,strand,eps = 0.05, cell_col = "cell", iso_col = "isoform",
+geneSiteTable_df = function(data,strand,eps = 0.05,endthresh = 5, cell_col = "cell", iso_col = "isoform",
                                count_col = "count",polyA_col = "polyA", split = "|",sep = ","){
-  splice_table = spliceTable(data = data,strand = strand, eps = eps,cell_col = cell_col, iso_col = iso_col,
+  splice_table = spliceTable(data = data,strand = strand, eps = eps,endthresh = endthresh,cell_col = cell_col, iso_col = iso_col,
                              count_col = count_col,polyA_col = polyA_col, split = split,sep = sep)
   if(is.null(splice_table)){
     return(NULL)
