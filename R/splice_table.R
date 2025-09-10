@@ -271,8 +271,8 @@ spliceTable = function(data,strand,eps = 0.05,endthresh = 5, cell_col = "cell", 
   iso_sites_index = lapply(iso_uniq,function(x){
     sites = isoform2sites(x)
     len = length(sites)
-    start = sites[1]
-    end = sites[len]
+    start = as.numeric(sites[1])
+    end = as.numeric(sites[len])
 
     if(len >= 4){
       in_sites = sites[seq(3,(len-1),2)]
