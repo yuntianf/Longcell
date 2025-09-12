@@ -30,9 +30,9 @@ isoform2sites = function(isoform,split = "|",sep = ","){
 #' @param strand The strand of this gene
 #' @return A binary vector indicating the splicing sites existence for a read
 sites2vec = function(start,in_site,out_site,end,polyA,sites_index,strand){
-  if(length(in_site) != length(out_site)){
-    stop("The length of in and out splicing sites should match!")
-  }
+  # if(length(in_site) != length(out_site)){
+  #   stop("The length of in and out splicing sites should match!")
+  # }
 
   if(!is.na(in_site[1]) & !is.na(out_site[1])){
     sites_vec = as.data.frame(rbind(cbind(in_site,"in"),cbind(out_site,"out")))
@@ -278,8 +278,8 @@ spliceTable = function(data,strand,eps = 0.05,endthresh = 5, cell_col = "cell", 
       in_sites = sites[seq(3,(len-1),2)]
       out_sites = sites[seq(2,(len-2),2)]
 
-      in_sites = in_sites[in_sites >= (start+endthresh)]
-      out_sites = out_sites[out_sites <= (end-endthresh)]
+      in_sites = in_sites[in_sites <= (end-endthresh)]
+      out_sites = out_sites[out_sites >= (start+endthresh)]
 
       if(length(in_sites) == 0){
         in_sites = NA
