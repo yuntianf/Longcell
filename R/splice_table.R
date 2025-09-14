@@ -75,8 +75,15 @@ sites2vec = function(start,in_site,out_site,end,polyA,sites_index,strand){
 #' @importFrom magrittr %>%
 #' @return A binary matrix indicating the splicing sites existence for all reads from a gene
 sites2matrix = function(data,in_sites_index,out_sites_index,strand){
-  sites_index = as.data.frame(rbind(cbind(in_sites_index,"in"),cbind(out_sites_index,"out")))
-  colnames(sites_index) = c("sites","state")
+  sites_index = data.frame(sites = character(), state = character())
+
+  if(length(in_sites_index) > 0){
+    sites_index = rbind(sites_index,data.frame(sites = in_sites_index, state = "in"))
+  }
+  if(length(out_sites_index) > 0){
+    sites_index = rbind(sites_index,data.frame(sites = out_sites_index, state = "out"))
+  }
+
   sites_index = sites_index %>% mutate(sites = as.numeric(sites)) %>% arrange(sites,state)
 
   out = lapply(1:nrow(data),function(i){
